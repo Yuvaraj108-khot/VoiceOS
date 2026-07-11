@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoiceOS - Live Call Interaction</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .transcript-scroll::-webkit-scrollbar { width: 4px; }
+        .transcript-scroll::-webkit-scrollbar-track { background: transparent; }
+        .transcript-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); opacity: 1; }
+            80%, 100% { opacity: 0; }
+        }
+        .pulse-indicator {
+            position: relative;
+        }
+        .pulse-indicator::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #3B82F6;
+            animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-xxl bg-surface border-b border-outline-variant transition-colors duration-150 ease-linear">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary cursor-pointer">menu</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">VoiceOS</h1>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden md:flex gap-lg mr-xl">
+<span class="font-label-md text-label-md text-primary cursor-pointer">Dashboard</span>
+<span class="font-label-md text-label-md text-on-surface-variant hover:text-primary cursor-pointer transition-colors">Employees</span>
+<span class="font-label-md text-label-md text-on-surface-variant hover:text-primary cursor-pointer transition-colors">Analytics</span>
+<span class="font-label-md text-label-md text-on-surface-variant hover:text-primary cursor-pointer transition-colors">Settings</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-container-low p-xs rounded-full transition-colors">search</span>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">JD</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-xxl pb-xxl px-gutter max-w-[1440px] mx-auto w-full">
+<!-- Live Header Info -->
+<div class="mt-xl mb-lg flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-3 h-3 bg-primary rounded-full pulse-indicator"></div>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Live Session</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Inbound call from +1 (555) 0123</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Active duration: 04:12 • AI Agent ID: Alpha-9</p>
+</div>
+<div class="flex gap-sm">
+<button class="flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-[20px]">headphones</span>
+                    Listen Live
+                </button>
+<button class="flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:brightness-110 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">transfer_within_a_station</span>
+                    Take Over
+                </button>
+</div>
+</div>
+<!-- Mission Control Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Left Column: Real-time Transcript -->
+<div class="col-span-12 lg:col-span-8 space-y-gutter">
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col h-[600px]">
+<div class="px-lg py-md border-b border-outline-variant bg-surface flex justify-between items-center">
+<h3 class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">notes</span>
+                            REAL-TIME TRANSCRIPT
+                        </h3>
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Recording</span>
+</div>
+</div>
+<div class="flex-grow overflow-y-auto p-lg space-y-lg transcript-scroll" id="transcript">
+<!-- AI Message -->
+<div class="flex gap-md max-w-[80%]">
+<div class="w-8 h-8 rounded bg-primary-container flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-[18px]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="space-y-xs">
+<span class="font-label-sm text-label-sm text-outline">VoiceOS (AI) • 10:02 AM</span>
+<div class="bg-surface-container-low p-md rounded-xl rounded-tl-none border border-outline-variant">
+<p class="font-body-md text-body-md text-on-surface">Hello! Thank you for calling VoiceOS customer support. This is Alpha-9. How can I help you today?</p>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-md max-w-[80%] ml-auto flex-row-reverse">
+<div class="w-8 h-8 rounded bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">person</span>
+</div>
+<div class="space-y-xs text-right">
+<span class="font-label-sm text-label-sm text-outline">Caller • 10:02 AM</span>
+<div class="bg-primary text-on-primary p-md rounded-xl rounded-tr-none">
+<p class="font-body-md text-body-md">Hi, I'd like to schedule an appointment for a consultation next Tuesday afternoon.</p>
+</div>
+</div>
+</div>
+<!-- AI Message -->
+<div class="flex gap-md max-w-[80%]">
+<div class="w-8 h-8 rounded bg-primary-container flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-[18px]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="space-y-xs">
+<span class="font-label-sm text-label-sm text-outline">VoiceOS (AI) • 10:03 AM</span>
+<div class="bg-surface-container-low p-md rounded-xl rounded-tl-none border border-outline-variant">
+<p class="font-body-md text-body-md text-on-surface">I can certainly help with that. Let me check the availability for Tuesday. We have slots at 2:00 PM and 4:30 PM. Would either of those work for you?</p>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-md max-w-[80%] ml-auto flex-row-reverse">
+<div class="w-8 h-8 rounded bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">person</span>
+</div>
+<div class="space-y-xs text-right">
+<span class="font-label-sm text-label-sm text-outline">Caller • 10:04 AM</span>
+<div class="bg-primary text-on-primary p-md rounded-xl rounded-tr-none">
+<p class="font-body-md text-body-md">2:00 PM sounds great. What do I need to bring?</p>
+</div>
+</div>
+</div>
+<!-- AI Preview (Pulsing) -->
+<div class="flex gap-md max-w-[80%] opacity-80 italic">
+<div class="w-8 h-8 rounded bg-secondary-container flex-shrink-0 flex items-center justify-center animate-pulse">
+<span class="material-symbols-outlined text-on-secondary-container text-[18px]">auto_awesome</span>
+</div>
+<div class="space-y-xs">
+<div class="flex items-center gap-xs">
+<span class="font-label-sm text-label-sm text-primary">AI Preview...</span>
+<div class="flex gap-1">
+<span class="w-1 h-1 bg-primary rounded-full animate-bounce" style="animation-delay: 0s"></span>
+<span class="w-1 h-1 bg-primary rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+<span class="w-1 h-1 bg-primary rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+</div>
+</div>
+<div class="bg-surface-container p-md rounded-xl rounded-tl-none border border-outline-variant border-dashed">
+<p class="font-body-md text-body-md text-on-surface-variant">Perfect, I've reserved Tuesday at 2:00 PM for you. You'll just need to bring a valid ID and any documents related to your inquiry...</p>
+</div>
+</div>
+</div>
+</div>
+<div class="px-lg py-md border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Press SPACE to talk directly</span>
+</div>
+<button class="text-primary font-label-md text-label-md flex items-center gap-xs hover:underline">
+<span class="material-symbols-outlined text-[18px]">history</span>
+                            View CRM History
+                        </button>
+</div>
+</div>
+</div>
+<!-- Right Column: Live Analysis -->
+<div class="col-span-12 lg:col-span-4 space-y-gutter">
+<!-- Sentiment & Intent Card -->
+<div class="bg-surface border border-outline-variant rounded-xl p-lg space-y-lg">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-md uppercase tracking-wider">Live Analysis</h3>
+<div class="space-y-md">
+<!-- Sentiment -->
+<div>
+<div class="flex justify-between items-center mb-xs">
+<span class="font-body-sm text-body-sm text-outline">Sentiment</span>
+<span class="font-label-md text-label-md text-primary flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">mood</span>
+                                        Positive
+                                    </span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<!-- Intent -->
+<div class="bg-tertiary-fixed rounded-lg p-md border border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-tertiary-fixed-variant block mb-xs">DETECTED INTENT</span>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-tertiary-fixed">calendar_today</span>
+<span class="font-headline-md text-[18px] text-on-tertiary-fixed font-bold">Schedule Appointment</span>
+</div>
+<div class="mt-xs text-on-tertiary-fixed-variant font-body-sm text-body-sm">
+                                    Confidence: 98.4%
+                                </div>
+</div>
+</div>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Metadata -->
+<div class="space-y-sm">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-outline">Caller Name</span>
+<span class="font-label-md text-label-md text-on-surface">Mark Stevenson (Unverified)</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-outline">Account Status</span>
+<span class="bg-secondary-container text-on-secondary-container px-xs py-[2px] rounded text-[10px] font-bold uppercase">Standard</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-outline">Language</span>
+<span class="font-label-md text-label-md text-on-surface">English (US)</span>
+</div>
+</div>
+</div>
+<!-- Call Summary (Instant) -->
+<div class="bg-surface border border-outline-variant rounded-xl p-lg">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Draft Summary</h3>
+<button class="text-primary hover:text-primary-container transition-colors">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+<div class="bg-surface-container-low rounded-lg p-md border border-outline-variant border-dashed">
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed italic">
+                            "Caller requested a consultation appointment for next Tuesday. Agent offered 2:00 PM and 4:30 PM slots. Caller selected 2:00 PM. Agent is currently explaining requirements..."
+                        </p>
+</div>
+<button class="w-full mt-lg py-sm bg-surface border border-outline text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-highest transition-all flex justify-center items-center gap-xs">
+<span class="material-symbols-outlined text-[20px]">auto_fix</span>
+                        Generate Full Report
+                    </button>
+</div>
+<!-- Related Actions -->
+<div class="grid grid-cols-2 gap-sm">
+<div class="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary transition-all group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary mb-xs">mail</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Email Link</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary transition-all group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary mb-xs">sms</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Send SMS</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-md pt-sm bg-surface border-t border-outline-variant">
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-md py-xs">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-label-sm text-label-sm">Employees</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-sm text-label-sm">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</div>
+</nav>
+<script>
+        // Micro-interaction: Auto-scroll transcript
+        const transcript = document.getElementById('transcript');
+        const scrollToBottom = () => {
+            transcript.scrollTop = transcript.scrollHeight;
+        };
+        
+        // Initial scroll
+        scrollToBottom();
+
+        // Simulate real-time updates for "Mission Control" feel
+        setInterval(() => {
+            // Subtle pulse for analysis elements could be added here
+        }, 3000);
+    </script>
+</body></html>

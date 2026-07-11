@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Knowledge Center - VoiceOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .file-card-hover:hover { border-color: #3B82F6; }
+        .pulse-ai { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-xxl">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-xxl bg-surface border-b border-outline-variant transition-colors duration-150 ease-linear">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-xs rounded transition-colors" data-icon="menu">menu</button>
+<h1 class="font-headline-md text-headline-md-mobile font-bold tracking-tight text-on-surface">VoiceOS</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-xs rounded transition-colors" data-icon="search">search</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-label-md">JD</div>
+</div>
+</header>
+<main class="pt-xxxl px-md md:px-margin max-w-[1440px] mx-auto">
+<!-- Dashboard Header Area -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-xxl mt-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile text-on-surface mb-xs">Knowledge Center</h2>
+<p class="font-body-md text-on-surface-variant max-w-2xl">Manage the collective intelligence of your VoiceOS instance. Upload documents, sync websites, and monitor processing status in real-time.</p>
+</div>
+<div class="flex items-center gap-sm">
+<button class="bg-primary text-on-primary font-label-md py-sm px-lg rounded-xl flex items-center gap-xs hover:brightness-110 active:scale-95 transition-all" onclick="openModal()">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                    Add Source
+                </button>
+</div>
+</section>
+<!-- Stats Overview (Asymmetric Layout) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-lg mb-xxl">
+<div class="md:col-span-8 bg-surface border border-outline-variant rounded-xl p-lg flex flex-col justify-between">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-label-md text-on-surface-variant uppercase tracking-wider mb-xs">Storage Capacity</h3>
+<p class="font-headline-md text-on-surface font-bold">12.4 GB / 50 GB</p>
+</div>
+<span class="material-symbols-outlined text-primary text-[32px]" data-icon="cloud_done">cloud_done</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 25%"></div>
+</div>
+</div>
+<div class="md:col-span-4 bg-primary-container text-on-primary-container rounded-xl p-lg flex flex-col justify-center border border-primary">
+<p class="font-label-md mb-xs opacity-90">Live Syncing</p>
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 bg-on-primary-container rounded-full pulse-ai"></div>
+<p class="font-headline-md font-bold">2 Sources</p>
+</div>
+<p class="font-body-sm mt-sm opacity-80">Syncing website and processing FAQ sheet.</p>
+</div>
+</div>
+<!-- Search & Filter Bar -->
+<div class="mb-lg flex flex-col md:flex-row gap-md">
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-xxl pr-md h-12 bg-surface border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md" placeholder="Search your knowledge base..." type="text"/>
+</div>
+<div class="flex gap-sm">
+<button class="h-12 px-md border border-outline-variant rounded-xl flex items-center gap-xs font-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="filter_list">filter_list</span>
+                    Filter
+                </button>
+<button class="h-12 px-md border border-outline-variant rounded-xl flex items-center gap-xs font-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="sort">sort</span>
+                    Sort
+                </button>
+</div>
+</div>
+<!-- Library Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+<!-- File: Corporate Handbook -->
+<div class="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group">
+<div class="flex justify-between items-start mb-lg">
+<div class="p-sm bg-surface-container-highest rounded-lg text-primary">
+<span class="material-symbols-outlined text-[32px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<div class="px-sm py-xs bg-[#E8F5E9] text-[#2E7D32] rounded font-label-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span>
+                        Indexed
+                    </div>
+</div>
+<h4 class="font-headline-md text-on-surface mb-xs truncate" title="Corporate_Handbook_2024.pdf">Corporate_Handbook_2024.pdf</h4>
+<p class="font-body-sm text-on-surface-variant mb-lg">Last updated 2 days ago • 2.4 MB</p>
+<div class="mt-auto flex justify-between items-center pt-md border-t border-outline-variant">
+<p class="font-label-sm text-outline">PDF Document</p>
+<div class="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-xs hover:bg-surface-container-low rounded"><span class="material-symbols-outlined text-[20px]" data-icon="download">download</span></button>
+<button class="p-xs hover:bg-surface-container-low rounded text-error"><span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
+</div>
+</div>
+</div>
+<!-- Website: VoiceOS Docs -->
+<div class="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group relative overflow-hidden">
+<div class="flex justify-between items-start mb-lg">
+<div class="p-sm bg-surface-container-highest rounded-lg text-tertiary">
+<span class="material-symbols-outlined text-[32px]" data-icon="language">language</span>
+</div>
+<div class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded font-label-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px] animate-spin" data-icon="sync">sync</span>
+                        Syncing 82%
+                    </div>
+</div>
+<h4 class="font-headline-md text-on-surface mb-xs truncate" title="Website: voiceos.ai/docs">Website: voiceos.ai/docs</h4>
+<p class="font-body-sm text-on-surface-variant mb-lg">Active crawl in progress...</p>
+<div class="w-full bg-surface-container-highest h-1 rounded-full mb-lg overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 82%"></div>
+</div>
+<div class="mt-auto flex justify-between items-center pt-md border-t border-outline-variant">
+<p class="font-label-sm text-outline">Web Source</p>
+<div class="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-xs hover:bg-surface-container-low rounded"><span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span></button>
+<button class="p-xs hover:bg-surface-container-low rounded text-error"><span class="material-symbols-outlined text-[20px]" data-icon="link_off">link_off</span></button>
+</div>
+</div>
+</div>
+<!-- Spreadsheet: FAQ Sheet -->
+<div class="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group">
+<div class="flex justify-between items-start mb-lg">
+<div class="p-sm bg-surface-container-highest rounded-lg text-[#1D6F42]">
+<span class="material-symbols-outlined text-[32px]" data-icon="description">description</span>
+</div>
+<div class="px-sm py-xs bg-tertiary-fixed text-on-tertiary-fixed rounded font-label-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px] pulse-ai" data-icon="hourglass_empty">hourglass_empty</span>
+                        Processing
+                    </div>
+</div>
+<h4 class="font-headline-md text-on-surface mb-xs truncate" title="FAQ_Sheet.xlsx">FAQ_Sheet.xlsx</h4>
+<p class="font-body-sm text-on-surface-variant mb-lg">Added today • 450 KB</p>
+<div class="mt-auto flex justify-between items-center pt-md border-t border-outline-variant">
+<p class="font-label-sm text-outline">XLSX Spreadsheet</p>
+<div class="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-xs hover:bg-surface-container-low rounded text-error"><span class="material-symbols-outlined text-[20px]" data-icon="cancel">cancel</span></button>
+</div>
+</div>
+</div>
+<!-- Placeholder for Empty State/Call to Action -->
+<button class="border-2 border-dashed border-outline-variant rounded-xl p-lg flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all group min-h-[220px]" onclick="openModal()">
+<div class="p-md rounded-full bg-surface-container-highest mb-md group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[40px]" data-icon="upload_file">upload_file</span>
+</div>
+<p class="font-label-md">Add New Intelligence</p>
+<p class="font-body-sm opacity-60">PDF, XLS, CSV, or Website URL</p>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-md pt-sm bg-surface border-t border-outline-variant md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs hover:bg-surface-container-highest transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-md py-xs active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-sm text-label-sm">Employees</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs hover:bg-surface-container-highest transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-sm text-label-sm">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs hover:bg-surface-container-highest transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</div>
+</nav>
+<!-- Modal: Add Source -->
+<div class="fixed inset-0 bg-on-background/40 backdrop-blur-sm z-[100] hidden items-center justify-center p-md" id="modal-overlay">
+<div class="bg-surface w-full max-w-lg rounded-xl border border-outline-variant shadow-lg flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-on-surface">Add Intelligence Source</h3>
+<button class="material-symbols-outlined p-xs hover:bg-surface-container-low rounded-full" data-icon="close" onclick="closeModal()">close</button>
+</div>
+<div class="p-lg">
+<div class="mb-lg">
+<p class="font-label-md text-on-surface-variant mb-md">CHOOSE SOURCE TYPE</p>
+<div class="grid grid-cols-2 gap-sm">
+<button class="flex items-center gap-sm p-md border border-primary bg-primary-container/10 rounded-lg text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="file_upload">file_upload</span>
+<span class="font-label-md">Upload Files</span>
+</button>
+<button class="flex items-center gap-sm p-md border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined" data-icon="public">public</span>
+<span class="font-label-md">Web Crawler</span>
+</button>
+</div>
+</div>
+<div class="mb-lg">
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-xxl flex flex-col items-center justify-center gap-sm hover:bg-surface-container-low transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[48px] text-outline" data-icon="cloud_upload">cloud_upload</span>
+<div class="text-center">
+<p class="font-body-md text-on-surface font-medium">Click to upload or drag &amp; drop</p>
+<p class="font-body-sm text-outline">Supported: PDF, XLSX, CSV, TXT (Max 50MB)</p>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" id="auto-sync" type="checkbox"/>
+<label class="font-body-sm text-on-surface-variant" for="auto-sync">Automatically re-index files when they change</label>
+</div>
+</div>
+<div class="p-lg bg-surface-container-low flex justify-end gap-sm">
+<button class="px-lg h-10 border border-outline-variant rounded-xl font-label-md text-on-surface-variant hover:bg-surface-container-highest transition-colors" onclick="closeModal()">Cancel</button>
+<button class="px-lg h-10 bg-primary text-on-primary rounded-xl font-label-md hover:brightness-110 transition-all">Process Source</button>
+</div>
+</div>
+</div>
+<script>
+        function openModal() {
+            const modal = document.getElementById('modal-overlay');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-overlay');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Simple interactive hover effects for grid items
+        document.querySelectorAll('.file-card-hover').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-sm');
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-sm');
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body></html>

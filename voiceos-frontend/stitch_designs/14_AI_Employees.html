@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoiceOS - AI Employee Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+        }
+        .employee-card:hover .card-actions {
+            opacity: 1;
+        }
+        .dot-pulse {
+            position: relative;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #0058be;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 88, 190, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 88, 190, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 88, 190, 0); }
+        }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-xxl bg-surface border-b border-outline-variant transition-colors duration-150 ease-linear">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-low p-xs rounded-xl transition-colors">menu</button>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">VoiceOS</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden md:flex gap-xl mr-xl">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary" href="#">Dashboard</a>
+<a class="font-label-sm text-label-sm text-primary" href="#">Employees</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary" href="#">Analytics</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary" href="#">Settings</a>
+</div>
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-low p-xs rounded-xl transition-colors">search</button>
+<div class="w-10 h-10 rounded-full border border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a modern executive against a clean, minimal white background. High-key lighting, sharp focus, capturing a sophisticated and trustworthy enterprise persona. Soft blue and grey tones predominate in a crisp, light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfulTmp4pz_jpQPMy4-BT0O2yJYR2J3x-jsurPoDiSy5jKeN_qGEoCTUbkR6zlR4x8QNGsUHCPsT6jpHSv-TlxHF8zSGBvTm6mkmmClqaDrGhwdBMZ4l2em2wcT3pbr2nFrTSFwEGk6LS024ZzMRj34bkHgN7cVSW0NBVIcoDOgRZgdLGZGWfAxjPSVoVPN_mg4WI27LxKG7OEArEFGIRfshaQSyLhxzhaARTfCHgb2KFyfp3XIce6kQ"/>
+</div>
+</div>
+</header>
+<main class="pt-xxxl pb-xxxl px-md md:px-xxl max-w-[1440px] mx-auto mt-xxl">
+<!-- Page Header -->
+<section class="flex flex-col md:flex-row justify-between items-start md:items-center mb-xxl gap-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">AI Workforce</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage and scale your autonomous voice workforce with precision.</p>
+</div>
+<button class="flex items-center gap-sm bg-primary text-on-primary px-lg py-md rounded-xl hover:bg-primary-container transition-all active:scale-95 shadow-sm">
+<span class="material-symbols-outlined">add</span>
+<span class="font-label-md text-label-md">Add Employee</span>
+</button>
+</section>
+<!-- Search & Filter Bar -->
+<div class="flex flex-wrap gap-md mb-xl bg-white p-md rounded-xl border border-outline-variant">
+<div class="flex-1 min-w-[240px] relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-[48px] h-10 bg-surface border-outline-variant rounded-lg focus:ring-primary focus:border-primary font-body-sm text-body-sm" placeholder="Search employees by name, role or skill..." type="text"/>
+</div>
+<button class="flex items-center gap-xs px-md h-10 border border-outline-variant rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                Status
+            </button>
+<button class="flex items-center gap-xs px-md h-10 border border-outline-variant rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-[18px]">language</span>
+                Language
+            </button>
+</div>
+<!-- Employee Bento Grid -->
+<div class="bento-grid">
+<!-- Employee Card 1 -->
+<article class="employee-card bg-white border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-all group flex flex-col">
+<div class="p-lg flex-1">
+<div class="flex justify-between items-start mb-lg">
+<div class="flex gap-md">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist 3D render of a friendly male avatar with a warm expression. The lighting is soft and professional with a light blue gradient background. Minimalist enterprise aesthetic, high fidelity, polished corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyk0Wg1D3vqi3rIJx6d_wKxYEg-uHdvolqZWiWR7K-RR3In94BZjYR1Afz5kDrGqRAwEEeFPHOWqILNKIWcGR2esl0kiBFrZTuyVYlbAfI8rCTbgzn-pt_gSoGZXEai-CPGSj0K9y90s4mGhDFWhoCNxQXXszAP4uwBfYYbQukwr-j49FX4ZeFokLiF-2S8a8F-Gajz87TbUg53mbIaHIdz0evb9JEqkvSpP804ujY0C-31HqctfPFwg"/>
+</div>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h3 class="font-headline-md text-headline-md text-on-surface">Marcus</h3>
+<span class="px-sm py-xs bg-secondary-container text-on-secondary-container text-[10px] uppercase tracking-wider font-bold rounded-lg">Active</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Billing &amp; Payments</p>
+</div>
+</div>
+<div class="dot-pulse"></div>
+</div>
+<div class="space-y-md mb-lg">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">call</span>
+<span class="font-label-md text-label-md text-on-surface">+1 (555) 012-3456</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">record_voice_over</span>
+<span class="font-label-md text-label-md text-on-surface">Calm, Professional</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">translate</span>
+<span class="font-label-md text-label-md text-on-surface">24 languages supported</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-md flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Current Handles</span>
+<span class="font-headline-md text-headline-md text-primary font-bold">142</span>
+</div>
+</div>
+<div class="card-actions px-lg py-md bg-surface-container border-t border-outline-variant flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="flex items-center gap-xs font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span> Edit
+                    </button>
+<div class="flex gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-xs rounded-lg transition-colors" title="Pause">pause_circle</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-xs rounded-lg transition-colors" title="Duplicate">content_copy</button>
+</div>
+</div>
+</article>
+<!-- Employee Card 2 -->
+<article class="employee-card bg-white border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-all group flex flex-col">
+<div class="p-lg flex-1">
+<div class="flex justify-between items-start mb-lg">
+<div class="flex gap-md">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A sophisticated 3D render of a professional female avatar with glasses, representing technical support. Soft, even lighting against a clean neutral background. Refined enterprise aesthetic, conveying intelligence and reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8TGvV_csqA9OYYZ1yveFQpPdk4hPm7EI_jlf09DyY7w2Fx4BqAiTxQ5C5aZhbGUKHshZaB92aP3DquMcM-2qAUhRpurmpIrwaKuzQBMnBTz1qCbBLrIWFEzQersVjLhIVfY1YXHDLH4Gm4FFirxEjw6VdKRNfqERA_q4X0QBcalXCuEKEQl5uyHgMQzkgIQsSITfPkA8WreEZtIET2DhtMPjJ437BcbYT94RqBia1T2eu92MJ_HGT-w"/>
+</div>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h3 class="font-headline-md text-headline-md text-on-surface">Sienna</h3>
+<span class="px-sm py-xs bg-secondary-container text-on-secondary-container text-[10px] uppercase tracking-wider font-bold rounded-lg">Active</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Technical Support</p>
+</div>
+</div>
+<div class="dot-pulse"></div>
+</div>
+<div class="space-y-md mb-lg">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">call</span>
+<span class="font-label-md text-label-md text-on-surface">+1 (555) 890-1234</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">record_voice_over</span>
+<span class="font-label-md text-label-md text-on-surface">Helpful, Articulate</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">translate</span>
+<span class="font-label-md text-label-md text-on-surface">12 languages supported</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-md flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Current Handles</span>
+<span class="font-headline-md text-headline-md text-primary font-bold">89</span>
+</div>
+</div>
+<div class="card-actions px-lg py-md bg-surface-container border-t border-outline-variant flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="flex items-center gap-xs font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span> Edit
+                    </button>
+<div class="flex gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-xs rounded-lg transition-colors" title="Pause">pause_circle</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-xs rounded-lg transition-colors" title="Duplicate">content_copy</button>
+</div>
+</div>
+</article>
+<!-- Employee Card 3 (Training State) -->
+<article class="employee-card bg-white border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-all group flex flex-col">
+<div class="p-lg flex-1">
+<div class="flex justify-between items-start mb-lg">
+<div class="flex gap-md">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-outline-variant bg-surface-container-low flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="A stylized, modern 3D avatar of a friendly sales agent. Warm tones, professional attire, soft focused light background. High fidelity 3D style suitable for a high-end enterprise application dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc7ZLMfWvw1vFUysT1Qo_S2oaVXGIea2ma9HZCCvDcs-_FfOACPIs_dxYVNqC-Fwt3vVWnM_tQP8a6Yl3HG--YE7SUGR3Ppzv6DXldf4iAhWHDIWtYXnfaWD4divX1zHW3HwZZT0lH3HhmC6X39kCJuFaqenT0Uny59euu7YeRyqLHFjNqHf2QdS_SNcwKTLxhwAzoBdNjrHzL5Aj9OsvE17iN7JytT8hzaDwPNiDMMxqwK0dAx7BJ4A"/>
+<div class="absolute inset-0 bg-white/40 backdrop-blur-[2px]"></div>
+<span class="material-symbols-outlined absolute text-primary">model_training</span>
+</div>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h3 class="font-headline-md text-headline-md text-on-surface">Aria</h3>
+<span class="px-sm py-xs bg-tertiary-container text-on-tertiary-container text-[10px] uppercase tracking-wider font-bold rounded-lg">Training</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Sales &amp; Lead Gen</p>
+</div>
+</div>
+</div>
+<div class="space-y-md mb-lg">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">call</span>
+<span class="font-label-md text-label-md text-on-surface">Provisioning...</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">record_voice_over</span>
+<span class="font-label-md text-label-md text-on-surface">Enthusiastic, Clear</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline text-[20px]">translate</span>
+<span class="font-label-md text-label-md text-on-surface">1 language (English)</span>
+</div>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden mb-xs mt-lg">
+<div class="h-full bg-primary w-[65%] animate-pulse"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Training Progress</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">65%</span>
+</div>
+</div>
+<div class="card-actions px-lg py-md bg-surface-container border-t border-outline-variant flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="flex items-center gap-xs font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span> Edit
+                    </button>
+<div class="flex gap-md">
+<button class="material-symbols-outlined text-outline cursor-not-allowed p-xs rounded-lg" disabled="" title="Pause">pause_circle</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-xs rounded-lg transition-colors" title="Duplicate">content_copy</button>
+</div>
+</div>
+</article>
+<!-- Add New Placeholder -->
+<button class="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-xxl hover:border-primary hover:bg-primary/5 transition-all group min-h-[340px]">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-on-surface-variant text-[32px]">add</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface-variant">Hire AI Employee</h4>
+<p class="font-body-sm text-body-sm text-outline mt-xs">Select from templates or build custom</p>
+</button>
+</div>
+</main>
+<!-- Bottom Mobile Nav -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-md pt-sm bg-surface border-t border-outline-variant transition-all duration-150 active:scale-95">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-md py-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<span>Employees</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined">analytics</span>
+<span>Analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</button>
+</nav>
+<!-- Subtle atmospheric micro-interaction script -->
+<script>
+        document.querySelectorAll('.employee-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+                
+                // Very subtle tilt effect
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 40;
+                const rotateY = (centerX - x) / 40;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+            });
+        });
+    </script>
+</body></html>

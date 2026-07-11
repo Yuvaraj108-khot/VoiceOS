@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoiceOS - Notification Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .notification-drawer {
+            transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen overflow-hidden">
+<!-- Top AppBar Component -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-xxl bg-surface border-b border-outline-variant transition-colors duration-150 ease-linear">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary p-xs hover:bg-surface-container-low rounded transition-colors duration-150">menu</button>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">VoiceOS</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant p-xs hover:bg-surface-container-low rounded transition-colors duration-150">search</button>
+<button class="material-symbols-outlined text-primary p-xs hover:bg-surface-container-low rounded transition-colors duration-150 relative" id="toggleNotifications">
+                notifications
+                <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas (Background behind drawer) -->
+<main class="pt-xxl pb-xxl px-lg max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg mt-xl">
+<!-- Mock Dashboard Content -->
+<div class="md:col-span-2 space-y-lg">
+<div class="bg-surface-container-lowest p-xl rounded-xl border border-outline-variant">
+<h2 class="font-headline-md text-headline-md mb-md">System Overview</h2>
+<div class="h-64 relative rounded-lg overflow-hidden mb-lg">
+<div class="relative z-10 p-lg h-full flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Active AI Employees</p>
+<p class="font-display text-display text-primary">12</p>
+</div>
+<div class="bg-primary-container text-on-primary-container px-md py-xs rounded-lg font-label-sm text-label-sm">
+                                    Normal Load
+                                </div>
+</div>
+<div class="flex gap-sm">
+<div class="h-1 bg-primary w-1/4 rounded-full"></div>
+<div class="h-1 bg-outline-variant w-3/4 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">Daily Conversations</p>
+<p class="font-headline-md text-headline-md text-on-surface">1,482</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">Customer Sentiment</p>
+<p class="font-headline-md text-headline-md text-on-surface">94% Positive</p>
+</div>
+</div>
+</div>
+<!-- Side Quick Stats -->
+<div class="space-y-lg">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
+<h3 class="font-label-md text-label-md font-bold mb-md uppercase tracking-wider">Upcoming Tasks</h3>
+<ul class="space-y-md">
+<li class="flex items-center gap-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-body-sm text-body-sm">Sync with CRM</span>
+</li>
+<li class="flex items-center gap-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-body-sm text-body-sm">Capacity Review</span>
+</li>
+</ul>
+</div>
+<div class="relative rounded-xl overflow-hidden h-48 group border border-outline-variant">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A professional architectural photograph of a high-tech server room with glowing blue LED strips on sleek metallic server racks. The environment is clean, futuristic, and industrial, capturing the scale of data processing power. Soft atmospheric haze and lens flares add depth and a sense of sophisticated machinery." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAnJ9WPkCliyHo2_qVTxORLcw5-n5zwtyBwyyP2ksW1ke8llDPfoJ55SvsWO0lE-OnbT0R7-FKY_-A35Y_7MiuAD1lE4dvNoYEeUrqqLGnn3aW9HkfmaHwd_NwSiQeY5L1sXe7hjC072XmvmbPZL-zS5thPnK8Axg2ldj_2EzTog_6dUe7IdSOzQyEn7bir9iJU4DixzLcuB4Fem-NwJQPNduj1FT62luYt4yyFOf6vbdaCuBAwdCtXEQ')"></div>
+<div class="absolute inset-0 bg-on-background/40 flex items-end p-md">
+<p class="font-label-sm text-label-sm text-surface-container-lowest">Server Status: Optimized</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Notification Side Drawer (The Task) -->
+<aside class="notification-drawer fixed top-0 right-0 h-full w-full md:w-[400px] bg-surface z-[60] shadow-2xl translate-x-full border-l border-outline-variant flex flex-col" id="notificationDrawer">
+<!-- Drawer Header -->
+<div class="px-lg h-xxl flex justify-between items-center border-b border-outline-variant">
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">Notifications</h2>
+<div class="flex gap-sm">
+<button class="material-symbols-outlined text-on-surface-variant p-xs hover:bg-surface-container-low rounded transition-colors" title="Mark all as read">done_all</button>
+<button class="material-symbols-outlined text-on-surface-variant p-xs hover:bg-surface-container-low rounded transition-colors" id="closeDrawer">close</button>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="px-lg py-md flex gap-sm border-b border-outline-variant overflow-x-auto custom-scrollbar">
+<button class="bg-primary text-on-primary px-md py-xs rounded-full font-label-sm text-label-sm">All</button>
+<button class="bg-surface-container-high text-on-surface-variant px-md py-xs rounded-full font-label-sm text-label-sm hover:bg-outline-variant transition-colors">Info</button>
+<button class="bg-surface-container-high text-on-surface-variant px-md py-xs rounded-full font-label-sm text-label-sm hover:bg-outline-variant transition-colors">Success</button>
+<button class="bg-surface-container-high text-on-surface-variant px-md py-xs rounded-full font-label-sm text-label-sm hover:bg-outline-variant transition-colors">Warning</button>
+</div>
+<!-- Notification List -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-md space-y-md">
+<!-- Category: New Alert (Success) -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant hover:border-primary transition-colors group">
+<div class="flex gap-md">
+<div class="w-10 h-10 rounded-lg bg-primary-fixed-dim flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="font-label-sm text-label-sm text-primary uppercase">New Appointment</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Just now</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-md">Sienna just booked a new appointment with John Doe.</p>
+<div class="flex gap-sm">
+<button class="bg-primary text-on-primary font-label-sm text-label-sm px-md py-xs rounded-lg hover:brightness-110 transition-all active:scale-95">View Details</button>
+<button class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-md py-xs rounded-lg hover:bg-outline-variant transition-colors">Dismiss</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Category: System Info (Warning) -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant hover:border-error transition-colors">
+<div class="flex gap-md">
+<div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="font-label-sm text-label-sm text-error uppercase">Capacity Warning</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">4m ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-md">High call volume detected: Scaling AI capacity to meet peak demand.</p>
+<div class="flex gap-sm">
+<button class="bg-inverse-surface text-inverse-on-surface font-label-sm text-label-sm px-md py-xs rounded-lg hover:opacity-90 transition-all active:scale-95 flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">call</span> View Call
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Category: Task Update (Info) -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant hover:border-tertiary transition-colors">
+<div class="flex gap-md">
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">description</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="font-label-sm text-label-sm text-tertiary uppercase">Knowledge Sync</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">2h ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-xs">Knowledge Indexing Complete: Corporate_Handbook_2024.pdf</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md">System updated with 240 new training nodes.</p>
+<button class="border border-outline text-on-surface-variant font-label-sm text-label-sm px-md py-xs rounded-lg hover:bg-surface-container-high transition-colors">Review Docs</button>
+</div>
+</div>
+</div>
+<!-- Yesterday Divider -->
+<div class="py-md flex items-center gap-md">
+<div class="h-px bg-outline-variant flex-1"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Yesterday</span>
+<div class="h-px bg-outline-variant flex-1"></div>
+</div>
+<!-- Historical Alert -->
+<div class="bg-surface-container-low opacity-70 p-md rounded-xl border border-outline-variant">
+<div class="flex gap-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant">check_circle</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Success</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Yesterday, 4:12 PM</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface">Weekly backup completed successfully.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer / Settings -->
+<div class="p-lg border-t border-outline-variant bg-surface-container-low">
+<button class="w-full flex items-center justify-center gap-sm text-primary font-label-md text-label-md hover:bg-surface-container-highest p-md rounded-xl transition-colors">
+<span class="material-symbols-outlined">settings_suggest</span>
+                Notification Settings
+            </button>
+</div>
+</aside>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-md pt-sm bg-surface border-t border-outline-variant md:hidden">
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-md py-xs transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-label-sm text-label-sm">Employees</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-sm text-label-sm">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</nav>
+<!-- Overlay -->
+<div class="fixed inset-0 bg-on-background/20 backdrop-blur-sm z-[55] hidden transition-opacity duration-300" id="overlay"></div>
+<script>
+        const notificationDrawer = document.getElementById('notificationDrawer');
+        const toggleBtn = document.getElementById('toggleNotifications');
+        const closeBtn = document.getElementById('closeDrawer');
+        const overlay = document.getElementById('overlay');
+
+        function openDrawer() {
+            notificationDrawer.classList.remove('translate-x-full');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('opacity-100'), 10);
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeDrawer() {
+            notificationDrawer.classList.add('translate-x-full');
+            overlay.classList.remove('opacity-100');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        toggleBtn.addEventListener('click', openDrawer);
+        closeBtn.addEventListener('click', closeDrawer);
+        overlay.addEventListener('click', closeDrawer);
+
+        // Escape key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDrawer();
+        });
+
+        // Initialize with drawer open on desktop for demonstration
+        if (window.innerWidth >= 1024) {
+            setTimeout(openDrawer, 500);
+        }
+    </script>
+</body></html>

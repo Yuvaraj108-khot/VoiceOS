@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Organization Settings - VoiceOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-xxl bg-surface border-b border-outline-variant transition-colors duration-150 ease-linear">
+<div class="flex items-center gap-md">
+<button class="p-xs hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-primary">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">VoiceOS</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-xs hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-label-sm">
+                JD
+            </div>
+</div>
+</header>
+<main class="pt-xxxl pb-xxxl px-md md:px-xxl max-w-[1440px] mx-auto">
+<div class="mb-xl">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Organization Settings</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage your enterprise environment, team access, and developer resources.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Navigation Rail (Desktop) -->
+<nav class="hidden lg:block lg:col-span-3 space-y-xs">
+<a class="flex items-center gap-sm px-md py-sm bg-secondary-container text-on-secondary-container rounded-xl font-label-md" href="#business">
+<span class="material-symbols-outlined">business</span>
+                    Business Profile
+                </a>
+<a class="flex items-center gap-sm px-md py-sm hover:bg-surface-container-low text-on-surface-variant rounded-xl font-label-md transition-colors" href="#team">
+<span class="material-symbols-outlined">group</span>
+                    Team Permissions
+                </a>
+<a class="flex items-center gap-sm px-md py-sm hover:bg-surface-container-low text-on-surface-variant rounded-xl font-label-md transition-colors" href="#api">
+<span class="material-symbols-outlined">api</span>
+                    API Keys
+                </a>
+<a class="flex items-center gap-sm px-md py-sm hover:bg-surface-container-low text-on-surface-variant rounded-xl font-label-md transition-colors" href="#billing">
+<span class="material-symbols-outlined">payments</span>
+                    Billing
+                </a>
+<a class="flex items-center gap-sm px-md py-sm hover:bg-surface-container-low text-on-surface-variant rounded-xl font-label-md transition-colors" href="#audit">
+<span class="material-symbols-outlined">history</span>
+                    Audit Logs
+                </a>
+</nav>
+<!-- Settings Content -->
+<div class="lg:col-span-9 space-y-xl">
+<!-- Section: Business Profile -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg" id="business">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="font-headline-md text-headline-md text-on-surface">Business Profile</h3>
+<button class="px-md py-xs bg-primary text-on-primary rounded-xl font-label-md hover:opacity-90 transition-opacity">Save Changes</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="space-y-xs">
+<label class="font-label-md text-on-surface-variant">Organization Name</label>
+<input class="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md" type="text" value="Acme AI Solutions"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-on-surface-variant">Industry</label>
+<select class="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md">
+<option>Technology &amp; SaaS</option>
+<option>Healthcare</option>
+<option>Finance</option>
+</select>
+</div>
+<div class="md:col-span-2 space-y-xs">
+<label class="font-label-md text-on-surface-variant">Support Email</label>
+<input class="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md" type="email" value="ops@acme-ai.io"/>
+</div>
+</div>
+</section>
+<!-- Section: Team Permissions -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden" id="team">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface">Team Permissions</h3>
+<button class="flex items-center gap-xs px-md py-xs border border-outline-variant text-on-surface rounded-xl font-label-md hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">person_add</span> Invite Member
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low font-label-sm text-on-surface-variant">
+<tr>
+<th class="px-lg py-sm">User</th>
+<th class="px-lg py-sm">Role</th>
+<th class="px-lg py-sm">Last Active</th>
+<th class="px-lg py-sm text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-on-surface divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-lowest/50 transition-colors">
+<td class="px-lg py-md flex items-center gap-md">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">SH</div>
+<div>
+<p class="font-label-md">Sarah Hudson</p>
+<p class="text-[12px] text-on-surface-variant">sarah@acme-ai.io</p>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="px-sm py-xs bg-tertiary-container/10 text-tertiary-container rounded font-label-sm uppercase tracking-wider text-[10px]">Administrator</span>
+</td>
+<td class="px-lg py-md text-on-surface-variant">2 mins ago</td>
+<td class="px-lg py-md text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest/50 transition-colors">
+<td class="px-lg py-md flex items-center gap-md">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">MK</div>
+<div>
+<p class="font-label-md">Marcus King</p>
+<p class="text-[12px] text-on-surface-variant">marcus@acme-ai.io</p>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="px-sm py-xs bg-secondary-container/10 text-on-secondary-container rounded font-label-sm uppercase tracking-wider text-[10px]">Developer</span>
+</td>
+<td class="px-lg py-md text-on-surface-variant">14 hours ago</td>
+<td class="px-lg py-md text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Section: API Keys -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg" id="api">
+<div class="mb-lg">
+<h3 class="font-headline-md text-headline-md text-on-surface">API Keys &amp; Endpoints</h3>
+<div class="mt-sm flex gap-md">
+<div class="flex items-center gap-xs px-sm py-xs bg-primary-container/10 text-primary rounded-lg font-label-sm">
+<span class="material-symbols-outlined text-[16px]">sync_alt</span>
+                                Webhooks: 4 active endpoints
+                            </div>
+<div class="flex items-center gap-xs px-sm py-xs bg-outline-variant/20 text-on-surface-variant rounded-lg font-label-sm">
+<span class="material-symbols-outlined text-[16px]">key</span>
+                                Production Tier
+                            </div>
+</div>
+</div>
+<div class="space-y-md">
+<div class="p-md bg-surface-container-low border border-outline-variant rounded-lg flex items-center justify-between">
+<div class="flex-1">
+<p class="font-label-md text-on-surface">Live Production Key</p>
+<p class="font-body-sm text-on-surface-variant font-mono">api_key_live_••••••••••••••••••••4d2a</p>
+</div>
+<div class="flex gap-sm">
+<button class="p-xs hover:bg-outline-variant/30 rounded transition-colors" title="Copy Key">
+<span class="material-symbols-outlined text-on-surface-variant">content_copy</span>
+</button>
+<button class="p-xs hover:bg-outline-variant/30 rounded transition-colors" title="Reveal Key">
+<span class="material-symbols-outlined text-on-surface-variant">visibility</span>
+</button>
+</div>
+</div>
+<div class="p-md bg-surface-container-low border border-outline-variant rounded-lg flex items-center justify-between">
+<div class="flex-1">
+<p class="font-label-md text-on-surface">Sandbox Test Key</p>
+<p class="font-body-sm text-on-surface-variant font-mono">api_key_test_••••••••••••••••••••9x77</p>
+</div>
+<div class="flex gap-sm">
+<button class="p-xs hover:bg-outline-variant/30 rounded transition-colors" title="Copy Key">
+<span class="material-symbols-outlined text-on-surface-variant">content_copy</span>
+</button>
+<button class="p-xs hover:bg-outline-variant/30 rounded transition-colors" title="Reveal Key">
+<span class="material-symbols-outlined text-on-surface-variant">visibility</span>
+</button>
+</div>
+</div>
+<button class="w-full py-sm border-2 border-dashed border-outline-variant text-on-surface-variant rounded-lg font-label-md hover:bg-surface-container-low hover:border-outline transition-all">
+                            + Generate New Secret Key
+                        </button>
+</div>
+</section>
+<!-- Section: Billing -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg overflow-hidden relative" id="billing">
+<!-- Subtle pattern for premium feel -->
+<div class="absolute top-0 right-0 p-lg opacity-10">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="relative z-10">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-lg">Billing &amp; Usage</h3>
+<div class="flex flex-wrap gap-lg mb-xl">
+<div class="flex-1 min-w-[200px] p-lg bg-primary text-on-primary rounded-xl">
+<p class="font-label-sm uppercase tracking-widest opacity-80 mb-sm">Current Plan</p>
+<h4 class="font-headline-md text-headline-md mb-xs">Enterprise</h4>
+<p class="font-body-sm opacity-90">Renews on Oct 12, 2024</p>
+</div>
+<div class="flex-1 min-w-[200px] p-lg bg-surface-container-low border border-outline-variant rounded-xl">
+<p class="font-label-sm uppercase tracking-widest text-on-surface-variant mb-sm">Credits Used</p>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-xs">1.2M / 5M</h4>
+<div class="w-full bg-outline-variant h-1.5 rounded-full mt-md overflow-hidden">
+<div class="bg-primary h-full w-[24%]"></div>
+</div>
+</div>
+</div>
+<div class="space-y-md">
+<h4 class="font-label-md text-on-surface border-b border-outline-variant pb-xs">Recent Invoices</h4>
+<div class="flex justify-between items-center py-sm group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant">description</span>
+<div>
+<p class="font-label-md">Invoice #VOS-88219</p>
+<p class="text-[12px] text-on-surface-variant">September 12, 2024</p>
+</div>
+</div>
+<div class="flex items-center gap-xl">
+<p class="font-label-md">$2,450.00</p>
+<button class="text-primary font-label-sm hover:underline">Download</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Audit Logs -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg" id="audit">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="font-headline-md text-headline-md text-on-surface">Audit Logs</h3>
+<div class="flex gap-sm">
+<button class="px-md py-xs bg-surface-container-low text-on-surface border border-outline-variant rounded-lg font-label-sm">Filter</button>
+<button class="px-md py-xs bg-surface-container-low text-on-surface border border-outline-variant rounded-lg font-label-sm">Export CSV</button>
+</div>
+</div>
+<div class="space-y-md">
+<div class="flex gap-md py-sm items-start">
+<div class="mt-1 w-2 h-2 rounded-full bg-primary shrink-0"></div>
+<div class="flex-1">
+<p class="font-body-md"><span class="font-label-md">sarah@acme-ai.io</span> rotated the production API Key</p>
+<p class="text-[12px] text-on-surface-variant">Today at 14:22 • IP: 192.168.1.44</p>
+</div>
+</div>
+<div class="flex gap-md py-sm items-start">
+<div class="mt-1 w-2 h-2 rounded-full bg-outline-variant shrink-0"></div>
+<div class="flex-1">
+<p class="font-body-md"><span class="font-label-md">System</span> successfully processed monthly recurring billing</p>
+<p class="text-[12px] text-on-surface-variant">Yesterday at 00:01 • Automated Task</p>
+</div>
+</div>
+<div class="flex gap-md py-sm items-start">
+<div class="mt-1 w-2 h-2 rounded-full bg-outline-variant shrink-0"></div>
+<div class="flex-1">
+<p class="font-body-md"><span class="font-label-md">marcus@acme-ai.io</span> updated the Voice Model weighting (ID: 0x9f2)</p>
+<p class="text-[12px] text-on-surface-variant">Sep 10, 2024 at 09:15 • IP: 104.22.1.201</p>
+</div>
+</div>
+<div class="pt-md text-center">
+<button class="text-primary font-label-md hover:underline">View All Organization Activity</button>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-md pt-sm bg-surface border-t border-outline-variant">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm mt-xs">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-label-sm text-label-sm mt-xs">Employees</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-sm text-label-sm mt-xs">Analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-md py-xs transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-sm text-label-sm mt-xs">Settings</span>
+</button>
+</nav>
+<script>
+        // Micro-interactions for navigation highlighting
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                document.querySelectorAll('nav a').forEach(l => {
+                    l.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+                    l.classList.add('hover:bg-surface-container-low', 'text-on-surface-variant');
+                });
+                link.classList.add('bg-secondary-container', 'text-on-secondary-container');
+                link.classList.remove('hover:bg-surface-container-low', 'text-on-surface-variant');
+            });
+        });
+
+        // Simple visibility toggle for API keys logic placeholder
+        document.querySelectorAll('[title="Reveal Key"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const icon = this.querySelector('.material-symbols-outlined');
+                const text = this.closest('div').previousElementSibling.querySelector('p:last-child');
+                if (icon.innerText === 'visibility') {
+                    icon.innerText = 'visibility_off';
+                    text.innerText = text.dataset.original || 'api_key_live_v98sh2j1k2l9m0n1p2q3r4s5t6u7v8w9x0y1z2a';
+                    text.dataset.original = text.innerText;
+                } else {
+                    icon.innerText = 'visibility';
+                    text.innerText = 'api_key_live_••••••••••••••••••••4d2a';
+                }
+            });
+        });
+    </script>
+</body></html>

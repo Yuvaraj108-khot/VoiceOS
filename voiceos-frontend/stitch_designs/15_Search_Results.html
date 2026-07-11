@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-overlay {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .search-container {
+            box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-xxl bg-surface border-b border-outline-variant transition-colors duration-150 ease-linear">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary cursor-pointer">menu</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">VoiceOS</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-sm px-md py-xs bg-surface-container-low border border-outline-variant rounded-lg cursor-text hover:bg-surface-container-highest transition-all duration-150" id="triggerSearch">
+<span class="material-symbols-outlined text-outline text-[20px]">search</span>
+<span class="text-on-surface-variant font-body-sm mr-xl">Find customers, calls...</span>
+<kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 border border-outline-variant rounded bg-surface-container-lowest text-[10px] font-medium text-outline">⌘K</kbd>
+</div>
+<span class="material-symbols-outlined text-primary cursor-pointer">search</span>
+</div>
+</header>
+<!-- Global Search Overlay -->
+<div class="fixed inset-0 z-[100] flex justify-center items-start pt-[88px] px-md" id="searchOverlay">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-on-background/40 backdrop-blur-sm" onclick="closeSearch()"></div>
+<!-- Search Dialog -->
+<div class="search-container animate-fade-in relative w-full max-w-2xl bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden">
+<!-- Search Input Area -->
+<div class="flex items-center px-lg py-md border-b border-outline-variant">
+<span class="material-symbols-outlined text-primary mr-md">search</span>
+<input autofocus="" class="w-full bg-transparent border-none focus:ring-0 text-on-surface font-body-lg placeholder:text-outline" id="searchInput" placeholder="Find customers, calls, employees..." type="text"/>
+<div class="flex items-center gap-xs">
+<span class="text-label-sm text-outline px-sm py-1 bg-surface-container-low rounded uppercase">Esc</span>
+</div>
+</div>
+<!-- Results Content -->
+<div class="max-h-[530px] overflow-y-auto p-md space-y-gutter">
+<!-- Category: Employees -->
+<section>
+<div class="flex items-center justify-between mb-sm px-sm">
+<h3 class="font-label-md text-label-md text-outline uppercase tracking-wider">Employees</h3>
+<span class="text-label-sm text-primary cursor-pointer hover:underline">View All</span>
+</div>
+<div class="space-y-xs">
+<!-- Employee Item -->
+<div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center overflow-hidden bg-secondary-container">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a female executive with warm lighting, wearing a minimalist blazer. The background is a soft-focus modern office setting with blue and slate tones. The style is clean, corporate photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCF1iBlwaoXqVB5PxBs_nUadmgDsxGE-0hGwr8wYbkVQEfD_pOndLJbrY-WrXUJGaRR-Yq8CKuuSYeUAeuzrGG7K-HWLB-3mf52Lo4uddKBW-6TeMmmJZkeDLuYzyGwB77mOOf0OHWm4wTUZmxKMLGOCUJ7dizTtKACTScTXzJN62rxCPgbm_SgSkBeywhV83Rl3vgsMFCu7OM6LPB6JkE5dCAuQ7tjEMRIs3Mni5unC9wwGsv_Y8tyqw"/>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Sienna</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Lead Design Strategist</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+<!-- Employee Item -->
+<div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center overflow-hidden bg-secondary-container">
+<img class="w-full h-full object-cover" data-alt="A sharp, professional headshot of a male software engineer with glasses. Modern studio lighting with cool blue highlights. Minimalist, high-end enterprise portrait style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYTjGwKrjonG2Wzj_BDFYv8fO54hE_ufqLkD9G1wePd8M1GgjCNXC2hpdRfvAJvg2qt_w8teoiSOtUGSUd9xwKNtHSeoivfaTei31Mfook5N7TZew4h7Lml9voua34qxvHGz0vlu9OqlMPAgS0UQMap963bnQ1PYb4C1nr1Z6qyhff4H7COGqk9qE4UuFvFjkURgEZPhYLCnzN2QDSZUMHIYyNFtT8xiJ82xFtYAugsE7MdCapkKC2NQ"/>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Marcus</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Senior Voice Architect</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</div>
+</section>
+<!-- Category: Calls -->
+<section>
+<div class="flex items-center justify-between mb-sm px-sm">
+<h3 class="font-label-md text-label-md text-outline uppercase tracking-wider">Calls</h3>
+<span class="text-label-sm text-primary cursor-pointer hover:underline">Recent</span>
+</div>
+<div class="space-y-xs">
+<div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-xl bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+<span class="material-symbols-outlined">call_received</span>
+</div>
+<div>
+<div class="flex items-center gap-sm">
+<p class="font-label-md text-label-md text-on-surface">Inbound from +1 (415) 0012</p>
+<span class="px-xs py-[1px] bg-error-container text-on-error-container text-[10px] font-bold rounded uppercase">Missed</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Duration: 0:45 • 12 mins ago</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>
+</div>
+</div>
+</section>
+<!-- Category: Documents -->
+<section>
+<div class="flex items-center justify-between mb-sm px-sm">
+<h3 class="font-label-md text-label-md text-outline uppercase tracking-wider">Documents</h3>
+</div>
+<div class="space-y-xs">
+<div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Security_Protocol.pdf</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Modified Oct 24 • 1.2 MB</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity">download</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer Meta -->
+<div class="bg-surface-container-low px-lg py-sm flex items-center gap-lg border-t border-outline-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_up</span>
+<span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">to navigate</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-outline text-[18px]">keyboard_return</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">to select</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Background Canvas (Simulated Dashboard Content) -->
+<main class="pt-xxxl pb-xxxl px-gutter max-w-7xl mx-auto space-y-xxl">
+<div class="flex flex-col md:flex-row justify-between items-end gap-md">
+<div>
+<p class="text-primary font-label-md text-label-md uppercase tracking-widest mb-xs">Operational Intelligence</p>
+<h1 class="font-display text-display text-on-surface">System Overview</h1>
+</div>
+<div class="flex gap-sm">
+<button class="px-md py-xs bg-surface-container-highest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-outline-variant transition-colors">Export Report</button>
+<button class="px-md py-xs bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm">Initialize AI Agent</button>
+</div>
+</div>
+<!-- Bento Grid Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="md:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-xl relative overflow-hidden">
+<div class="relative z-10">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-md">Active Call Volume</h2>
+<div class="h-48 w-full flex items-end gap-xs">
+<!-- Simulated bar chart -->
+<div class="flex-1 bg-primary-container h-[40%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary-container h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary h-[85%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary-container h-[55%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary-container h-[70%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary h-[95%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary-container h-[45%] rounded-t-sm"></div>
+</div>
+</div>
+<div class="absolute top-0 right-0 p-xl">
+<span class="text-label-sm text-primary flex items-center gap-xs bg-primary-fixed px-sm py-1 rounded-full">+12.4% <span class="material-symbols-outlined text-[14px]">trending_up</span></span>
+</div>
+</div>
+<div class="bg-inverse-surface text-inverse-on-surface rounded-xl p-xl flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-primary-fixed-dim text-[40px] mb-md">auto_awesome</span>
+<h3 class="font-headline-md text-headline-md mb-xs">AI Efficiency</h3>
+<p class="font-body-sm opacity-80">98.2% of inbound queries resolved without human intervention this week.</p>
+</div>
+<div class="mt-xl">
+<div class="w-full bg-on-surface-variant h-1 rounded-full overflow-hidden">
+<div class="bg-primary-fixed h-full w-[98.2%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<div class="p-lg bg-surface border border-outline-variant rounded-xl">
+<p class="text-outline font-label-sm text-label-sm uppercase mb-xs">Avg. Response Time</p>
+<p class="text-headline-md font-headline-md text-on-surface">1.2s</p>
+</div>
+<div class="p-lg bg-surface border border-outline-variant rounded-xl">
+<p class="text-outline font-label-sm text-label-sm uppercase mb-xs">Active Employees</p>
+<p class="text-headline-md font-headline-md text-on-surface">24</p>
+</div>
+<div class="p-lg bg-surface border border-outline-variant rounded-xl">
+<p class="text-outline font-label-sm text-label-sm uppercase mb-xs">Total Customers</p>
+<p class="text-headline-md font-headline-md text-on-surface">4.8k</p>
+</div>
+<div class="p-lg bg-surface border border-outline-variant rounded-xl">
+<p class="text-outline font-label-sm text-label-sm uppercase mb-xs">System Uptime</p>
+<p class="text-headline-md font-headline-md text-on-surface">99.9%</p>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-md pt-sm bg-surface border-t border-outline-variant md:hidden">
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-md py-xs active:scale-95 transition-all duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs active:scale-95 transition-all duration-150">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-label-sm text-label-sm">Employees</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs active:scale-95 transition-all duration-150">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-sm text-label-sm">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs active:scale-95 transition-all duration-150">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</div>
+</nav>
+<script>
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+        const triggerSearch = document.getElementById('triggerSearch');
+
+        // Toggle functions
+        function openSearch() {
+            searchOverlay.classList.remove('hidden');
+            searchOverlay.classList.add('flex');
+            setTimeout(() => searchInput.focus(), 50);
+        }
+
+        function closeSearch() {
+            searchOverlay.classList.add('hidden');
+            searchOverlay.classList.remove('flex');
+        }
+
+        // Event listeners
+        triggerSearch.addEventListener('click', openSearch);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearch();
+            }
+            if (e.key === 'Escape') {
+                closeSearch();
+            }
+        });
+
+        // Initialize hidden (standard state)
+        // Usually would be hidden by default unless triggered
+        // For this task, we want to show it as the primary interface element
+        // openSearch(); 
+    </script>
+</body></html>

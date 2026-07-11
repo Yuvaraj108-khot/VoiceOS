@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoiceOS | Analytics Overview</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .chart-bar {
+            transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8e0;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen overflow-x-hidden pb-xxxl md:pb-0 md:pt-xxl">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-xxl bg-surface border-b border-outline-variant transition-colors duration-150 ease-linear">
+<div class="flex items-center gap-md">
+<button class="p-xs hover:bg-surface-container-low rounded-full transition-colors duration-150 ease-linear">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile font-bold tracking-tight text-on-surface">VoiceOS</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-xs hover:bg-surface-container-low rounded-full transition-colors duration-150 ease-linear">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="search">search</span>
+</button>
+<div class="w-10 h-10 rounded-full border border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a high-level enterprise executive in a modern, minimalist office setting. The lighting is soft and directional, emphasizing a clean and authoritative look. The color palette is dominated by muted blues and grays, maintaining the premium brand identity of VoiceOS." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYszIpmDcQb0AwQ6WU_42htW8bsFuqsRrPRvGNJsDIau_VStvZwwaUju0CzK_QRFQqcWZpgecXuFCCBV5is5PSJvoO4DdskxPymSx5-05KGlXf3Eqj83WDMJAHODodblxGKvl8x_2eHnJhbkXCmFFR7EvAemuRT1gH95Nxs52JnTsEXj3L8Mi_J0HQTDrBv-naqdFDbY8sC_ySD8CGtIiAVTkMi8JjXRDDuLL5f1XxtbVR1Mewc8Nvqw"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-[1440px] mx-auto px-md md:px-lg lg:px-xl py-xl space-y-xl">
+<!-- Header & Filters Section -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-lg">
+<div class="space-y-xs">
+<h2 class="font-headline-lg text-headline-lg font-semibold text-on-surface">Analytics Overview</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Deep-dive into your AI employees' performance metrics and conversion trends.</p>
+</div>
+<div class="flex flex-wrap items-center gap-sm">
+<!-- Date Picker Filter -->
+<div class="flex items-center bg-white border border-outline-variant rounded-xl p-unit shadow-sm overflow-hidden">
+<button class="px-md py-xs font-label-md text-label-md bg-secondary-container text-on-secondary-container rounded-full transition-all">Today</button>
+<button class="px-md py-xs font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-all">7D</button>
+<button class="px-md py-xs font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-all">30D</button>
+</div>
+<!-- Employee Filter -->
+<div class="relative group">
+<button class="flex items-center gap-sm px-md h-10 bg-white border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface-variant hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="group">group</span>
+<span>All Employees</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+<button class="flex items-center justify-center w-10 h-10 bg-primary text-white rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm">
+<span class="material-symbols-outlined" data-icon="file_download">file_download</span>
+</button>
+</div>
+</section>
+<!-- KPI Bento Grid -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Stat 1 -->
+<div class="bg-white border border-outline-variant rounded-xl p-lg flex flex-col justify-between group hover:border-primary transition-colors duration-300">
+<div class="flex justify-between items-start">
+<span class="p-sm bg-primary-fixed rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="call">call</span>
+</span>
+<span class="font-label-sm text-label-sm text-green-600 bg-green-50 px-sm py-xs rounded flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                        12%
+                    </span>
+</div>
+<div class="mt-xl">
+<p class="font-label-md text-label-md text-on-surface-variant">Total Calls Handled</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">12,482</h3>
+</div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-white border border-outline-variant rounded-xl p-lg flex flex-col justify-between group hover:border-primary transition-colors duration-300">
+<div class="flex justify-between items-start">
+<span class="p-sm bg-secondary-fixed rounded-lg">
+<span class="material-symbols-outlined text-secondary" data-icon="timer">timer</span>
+</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-low px-sm py-xs rounded flex items-center gap-xs">
+                        Stable
+                    </span>
+</div>
+<div class="mt-xl">
+<p class="font-label-md text-label-md text-on-surface-variant">Avg. Call Duration</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">4m 12s</h3>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-white border border-outline-variant rounded-xl p-lg flex flex-col justify-between group hover:border-primary transition-colors duration-300">
+<div class="flex justify-between items-start">
+<span class="p-sm bg-tertiary-fixed rounded-lg">
+<span class="material-symbols-outlined text-tertiary" data-icon="target">target</span>
+</span>
+<span class="font-label-sm text-label-sm text-green-600 bg-green-50 px-sm py-xs rounded flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                        4%
+                    </span>
+</div>
+<div class="mt-xl">
+<p class="font-label-md text-label-md text-on-surface-variant">Conversion Rate</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">24.8%</h3>
+</div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-white border border-outline-variant rounded-xl p-lg flex flex-col justify-between group hover:border-primary transition-colors duration-300">
+<div class="flex justify-between items-start">
+<span class="p-sm bg-primary-fixed rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="sentiment_satisfied">sentiment_satisfied</span>
+</span>
+<span class="font-label-sm text-label-sm text-red-600 bg-red-50 px-sm py-xs rounded flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_downward">arrow_downward</span>
+                        2%
+                    </span>
+</div>
+<div class="mt-xl">
+<p class="font-label-md text-label-md text-on-surface-variant">Customer CSAT</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">4.8/5.0</h3>
+</div>
+</div>
+</section>
+<!-- Main Analytics Visualizations -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Peak Call Hours (Bar Chart) - Takes 2 cols on LG -->
+<div class="lg:col-span-2 bg-white border border-outline-variant rounded-xl p-lg space-y-lg relative overflow-hidden">
+<div class="flex justify-between items-center">
+<h4 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">Peak Call Hours</h4>
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="more_horiz">more_horiz</span>
+</div>
+<div class="h-64 flex items-end justify-between gap-sm pt-md">
+<!-- Dynamic Bars -->
+<div class="flex-1 group relative">
+<div class="chart-bar w-full bg-primary-fixed group-hover:bg-primary rounded-t-sm" style="height: 40%"></div>
+<span class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-outline">08:00</span>
+</div>
+<div class="flex-1 group relative">
+<div class="chart-bar w-full bg-primary-fixed group-hover:bg-primary rounded-t-sm" style="height: 65%"></div>
+<span class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-outline">10:00</span>
+</div>
+<div class="flex-1 group relative">
+<div class="chart-bar w-full bg-primary-container group-hover:bg-primary rounded-t-sm" style="height: 90%">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] px-sm py-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">1.2k</div>
+</div>
+<span class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-outline">12:00</span>
+</div>
+<div class="flex-1 group relative">
+<div class="chart-bar w-full bg-primary-fixed group-hover:bg-primary rounded-t-sm" style="height: 75%"></div>
+<span class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-outline">14:00</span>
+</div>
+<div class="flex-1 group relative">
+<div class="chart-bar w-full bg-primary-fixed group-hover:bg-primary rounded-t-sm" style="height: 85%"></div>
+<span class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-outline">16:00</span>
+</div>
+<div class="flex-1 group relative">
+<div class="chart-bar w-full bg-primary-fixed group-hover:bg-primary rounded-t-sm" style="height: 55%"></div>
+<span class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-outline">18:00</span>
+</div>
+<div class="flex-1 group relative">
+<div class="chart-bar w-full bg-primary-fixed group-hover:bg-primary rounded-t-sm" style="height: 30%"></div>
+<span class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-outline">20:00</span>
+</div>
+</div>
+</div>
+<!-- Language Distribution (Pie Chart) -->
+<div class="bg-white border border-outline-variant rounded-xl p-lg space-y-lg">
+<div class="flex justify-between items-center">
+<h4 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">Language Distribution</h4>
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="translate">translate</span>
+</div>
+<div class="relative h-48 flex items-center justify-center">
+<!-- Mock Pie Chart with SVG -->
+<svg class="w-40 h-40 transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#dae2fd" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#0058be" stroke-dasharray="65 35" stroke-dashoffset="0" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#4d5d73" stroke-dasharray="20 80" stroke-dashoffset="-65" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#adc6ff" stroke-dasharray="15 85" stroke-dashoffset="-85" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline-md text-headline-md font-bold">12</span>
+<span class="font-label-sm text-label-sm text-outline">Total</span>
+</div>
+</div>
+<div class="space-y-sm">
+<div class="flex justify-between items-center font-label-md text-label-md">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span>English</span>
+</div>
+<span class="text-on-surface font-semibold">65%</span>
+</div>
+<div class="flex justify-between items-center font-label-md text-label-md">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-tertiary"></span>
+<span>Spanish</span>
+</div>
+<span class="text-on-surface font-semibold">20%</span>
+</div>
+<div class="flex justify-between items-center font-label-md text-label-md">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-primary-fixed-dim"></span>
+<span>Others</span>
+</div>
+<span class="text-on-surface font-semibold">15%</span>
+</div>
+</div>
+</div>
+<!-- Lead Conversion Rate (Line Chart) - Full width on MD/LG -->
+<div class="lg:col-span-3 bg-white border border-outline-variant rounded-xl p-lg space-y-lg">
+<div class="flex justify-between items-center">
+<div class="space-y-xs">
+<h4 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">Lead Conversion Rate</h4>
+<p class="font-body-sm text-body-sm text-outline">Monthly trending vs target performance</p>
+</div>
+<div class="flex gap-md">
+<div class="flex items-center gap-xs font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>Actual</span>
+</div>
+<div class="flex items-center gap-xs font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+<span>Target</span>
+</div>
+</div>
+</div>
+<!-- Mock Line Chart -->
+<div class="relative h-72 w-full pt-lg">
+<div class="absolute inset-0 flex flex-col justify-between py-xs pointer-events-none">
+<div class="border-t border-outline-variant w-full opacity-30"></div>
+<div class="border-t border-outline-variant w-full opacity-30"></div>
+<div class="border-t border-outline-variant w-full opacity-30"></div>
+<div class="border-t border-outline-variant w-full opacity-30"></div>
+<div class="border-t border-outline-variant w-full opacity-30"></div>
+</div>
+<!-- Line Path with SVG -->
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 1000 100">
+<!-- Target Line -->
+<path d="M0,70 L100,68 L200,65 L300,63 L400,60 L500,58 L600,55 L700,52 L800,50 L900,48 L1000,45" fill="none" stroke="#c2c6d6" stroke-dasharray="8,4" stroke-width="2"></path>
+<!-- Actual Line -->
+<path d="M0,80 L100,75 L200,60 L300,65 L400,40 L500,30 L600,45 L700,20 L800,25 L900,10 L1000,5" fill="none" stroke="#0058be" stroke-linejoin="round" stroke-width="3"></path>
+<!-- Area gradient -->
+<path d="M0,80 L100,75 L200,60 L300,65 L400,40 L500,30 L600,45 L700,20 L800,25 L900,10 L1000,5 L1000,100 L0,100 Z" fill="url(#line-gradient)" opacity="0.1"></path>
+<defs>
+<lineargradient id="line-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#0058be"></stop>
+<stop offset="100%" stop-color="#0058be" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+</svg>
+<div class="flex justify-between mt-sm">
+<span class="font-label-sm text-[10px] text-outline">JAN</span>
+<span class="font-label-sm text-[10px] text-outline">MAR</span>
+<span class="font-label-sm text-[10px] text-outline">MAY</span>
+<span class="font-label-sm text-[10px] text-outline">JUL</span>
+<span class="font-label-sm text-[10px] text-outline">SEP</span>
+<span class="font-label-sm text-[10px] text-outline">NOV</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Insights / Asymmetric Row -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="bg-primary text-white rounded-xl p-lg space-y-md relative overflow-hidden group">
+<div class="relative z-10 space-y-md">
+<span class="font-label-sm text-label-sm px-sm py-xs bg-white/20 rounded inline-block">AI SUGGESTION</span>
+<h3 class="font-headline-md text-headline-md font-semibold">Scaling Required</h3>
+<p class="font-body-md text-body-md text-primary-fixed/80">Based on peak hour trends (12 PM - 4 PM), we recommend activating 3 additional AI instances to maintain response latency below 150ms.</p>
+<button class="flex items-center gap-sm px-lg h-12 bg-white text-primary rounded-xl font-label-md text-label-md font-bold hover:bg-primary-fixed transition-colors">
+                        Deploy Auto-Scaling
+                        <span class="material-symbols-outlined text-[18px]" data-icon="auto_mode">auto_mode</span>
+</button>
+</div>
+<!-- Abstract visual element -->
+<div class="absolute -right-10 -bottom-10 w-48 h-48 bg-primary-container rounded-full opacity-50 blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+</div>
+<div class="bg-white border border-outline-variant rounded-xl p-lg space-y-md">
+<h4 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">Top Performing Employees</h4>
+<div class="space-y-md max-h-64 overflow-y-auto custom-scrollbar pr-sm">
+<!-- Employee Row -->
+<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-bold">JD</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Jordan Davis</p>
+<p class="font-body-sm text-[12px] text-outline">Inbound Support</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface">94.2%</p>
+<p class="font-body-sm text-[10px] text-green-600">Conv. Rate</p>
+</div>
+</div>
+<!-- Employee Row -->
+<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed-dim flex items-center justify-center text-tertiary font-bold">SR</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Sarah Rivera</p>
+<p class="font-body-sm text-[12px] text-outline">Lead Qualification</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface">88.5%</p>
+<p class="font-body-sm text-[10px] text-green-600">Conv. Rate</p>
+</div>
+</div>
+<!-- Employee Row -->
+<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center text-primary font-bold">MK</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Marcus Knight</p>
+<p class="font-body-sm text-[12px] text-outline">Tech Support</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface">82.1%</p>
+<p class="font-body-sm text-[10px] text-green-600">Conv. Rate</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-md pt-sm bg-surface border-t border-outline-variant md:hidden">
+<!-- Dashboard -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs hover:bg-surface-container-highest transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<!-- Employees -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs hover:bg-surface-container-highest transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-sm text-label-sm">Employees</span>
+</a>
+<!-- Analytics (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-md py-xs transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-sm text-label-sm">Analytics</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-md py-xs hover:bg-surface-container-highest transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</nav>
+<!-- Simple Interactivity for the Bar Chart -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bars = document.querySelectorAll('.chart-bar');
+            bars.forEach(bar => {
+                const finalHeight = bar.style.height;
+                bar.style.height = '0%';
+                setTimeout(() => {
+                    bar.style.height = finalHeight;
+                }, 200);
+            });
+        });
+    </script>
+</body></html>

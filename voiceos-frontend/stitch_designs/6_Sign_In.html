@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | VoiceOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .login-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .login-card:hover {
+            border-color: #3B82F6;
+        }
+        .security-badge-pulse {
+            animation: pulse-subtle 3s infinite ease-in-out;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#363025", outline: "#827561", "secondary-fixed-dim": "#e4c282", background: "#fff8f2", "tertiary-container": "#5bb9ff", "on-secondary-fixed-variant": "#5a430f", "on-error": "#ffffff", "on-primary-container": "#593f00", "on-surface-variant": "#504533", "surface-container": "#f8ecdd", "tertiary-fixed": "#cce5ff", "surface-container-low": "#fef2e2", "on-tertiary-container": "#00486f", "on-secondary-container": "#795f29", "secondary-fixed": "#ffdea4", "on-primary-fixed-variant": "#5d4200", "on-primary": "#ffffff", "surface-container-highest": "#ece1d2", secondary: "#745a25", "on-background": "#201b12", "on-tertiary-fixed-variant": "#004b73", "error-container": "#ffdad6", "surface-tint": "#7b5800", "on-error-container": "#93000a", "on-secondary": "#ffffff", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#001d31", "on-tertiary": "#ffffff", "inverse-on-surface": "#fbefdf", "surface-variant": "#ece1d2", "on-secondary-fixed": "#261900", surface: "#fff8f2", "primary-fixed-dim": "#fbbc29", error: "#ba1a1a", "primary-fixed": "#ffdea4", "on-primary-fixed": "#261900", primary: "#7b5800", tertiary: "#006397", "surface-bright": "#fff8f2", "on-surface": "#201b12", "primary-container": "#e3a709", "outline-variant": "#d4c4ad", "inverse-primary": "#fbbc29", "surface-dim": "#e4d8c9", "surface-container-high": "#f2e7d7", "secondary-container": "#ffdb99", "tertiary-fixed-dim": "#92ccff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {xl: "32px", xxl: "48px", gutter: "24px", md: "16px", sm: "8px", lg: "24px", xs: "4px", xxxl: "64px", unit: "4px", margin: "32px"}, fontFamily: {"label-sm": ["Inter"], display: ["Inter"], "body-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600"}], display: ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", letterSpacing: "0em", fontWeight: "400"}], "headline-lg-mobile": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", letterSpacing: "0em", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "500"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}]}}}};</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col justify-center items-center px-md py-xxl">
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+<div class="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[120px]"></div>
+<div class="absolute -bottom-[10%] -right-[5%] w-[40%] h-[40%] rounded-full bg-secondary/5 blur-[100px]"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[440px] z-10">
+<!-- Identity Header -->
+<header class="text-center mb-xxl">
+<div class="inline-flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-primary text-[48px] mr-xs" style="font-variation-settings: 'FILL' 1;">settings_voice</span>
+<h1 class="font-headline-md text-headline-md font-extrabold tracking-tight text-on-surface">VoiceOS</h1>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Intelligent Enterprise Governance</p>
+</header>
+<!-- Login Container -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-xl login-card">
+<form class="space-y-lg">
+<!-- Field: Business Email -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs" for="email">Business Email</label>
+<input class="w-full h-[48px] px-md rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-body-md" id="email" name="email" placeholder="name@company.com" type="email"/>
+</div>
+<!-- Field: Password -->
+<div>
+<div class="flex justify-between items-center mb-xs">
+<label class="block font-label-md text-label-md text-on-surface-variant" for="password">Password</label>
+<a class="font-label-sm text-label-sm text-primary hover:underline transition-all" href="#">Forgot password?</a>
+</div>
+<div class="relative">
+<input class="w-full h-[48px] px-md rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-body-md" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary CTA -->
+<button class="w-full h-[48px] bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-sm" type="submit">
+                    Sign In
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<!-- Divider -->
+<div class="relative flex items-center py-md">
+<div class="flex-grow border-t border-outline-variant"></div>
+<span class="flex-shrink mx-md font-label-sm text-label-sm text-outline uppercase tracking-widest">or continue with</span>
+<div class="flex-grow border-t border-outline-variant"></div>
+</div>
+<!-- SSO Options -->
+<div class="grid grid-cols-2 gap-md">
+<!-- Microsoft SSO -->
+<button class="flex items-center justify-center gap-sm h-[48px] border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface-variant" type="button">
+<svg class="w-5 h-5" fill="none" viewbox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.8333 0H0V10.8333H10.8333V0Z" fill="#F25022"></path>
+<path d="M22.6667 0H11.8334V10.8333H22.6667V0Z" fill="#7FBA00"></path>
+<path d="M10.8333 11.8333H0V22.6666H10.8333V11.8333Z" fill="#00A4EF"></path>
+<path d="M22.6667 11.8333H11.8334V22.6666H22.6667V11.8333Z" fill="#FFB900"></path>
+</svg>
+                        Azure
+                    </button>
+<!-- Okta SSO -->
+<button class="flex items-center justify-center gap-sm h-[48px] border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface-variant" type="button">
+<svg class="w-5 h-5" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 18.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13z" fill="#007DC1"></path>
+</svg>
+                        Okta
+                    </button>
+</div>
+</form>
+</div>
+<!-- Footer / Support -->
+<footer class="mt-xxl text-center">
+<!-- Security Badges -->
+<div class="flex items-center justify-center gap-xl mb-lg grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all">
+<div class="flex items-center gap-xs security-badge-pulse">
+<span class="material-symbols-outlined text-outline text-[20px]">verified_user</span>
+<span class="font-label-sm text-label-sm text-outline tracking-tight">SOC2 TYPE II</span>
+</div>
+<div class="flex items-center gap-xs security-badge-pulse">
+<span class="material-symbols-outlined text-outline text-[20px]">gavel</span>
+<span class="font-label-sm text-label-sm text-outline tracking-tight">GDPR COMPLIANT</span>
+</div>
+<div class="flex items-center gap-xs security-badge-pulse">
+<span class="material-symbols-outlined text-outline text-[20px]">lock</span>
+<span class="font-label-sm text-label-sm text-outline tracking-tight">ISO 27001</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Protected by enterprise-grade encryption. 
+                <a class="text-primary hover:underline ml-xs" href="#">Security Whitepaper</a>
+</p>
+</footer>
+</main>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.querySelector('form');
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitBtn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Authenticating...
+                `;
+                submitBtn.disabled = true;
+                
+                // Simulate network latency
+                setTimeout(() => {
+                    submitBtn.classList.remove('bg-primary');
+                    submitBtn.classList.add('bg-green-600');
+                    submitBtn.innerHTML = `<span class="material-symbols-outlined mr-xs">check_circle</span> Welcome to VoiceOS`;
+                }, 1500);
+            });
+
+            // Password Toggle logic
+            const togglePass = document.querySelector('button .material-symbols-outlined');
+            const passInput = document.querySelector('#password');
+            let visible = false;
+            
+            togglePass.parentElement.addEventListener('click', () => {
+                visible = !visible;
+                passInput.type = visible ? 'text' : 'password';
+                togglePass.textContent = visible ? 'visibility_off' : 'visibility';
+            });
+        });
+    </script>
+</body></html>

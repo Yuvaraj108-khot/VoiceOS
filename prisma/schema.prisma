@@ -1,0 +1,993 @@
+// prisma/schema.prisma
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector"), uuid_ossp(map: "uuid-ossp"), pg_trgm]
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum PlanTier {
+  STARTER
+  GROWTH
+  ENTERPRISE
+  CUSTOM
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MANAGER
+  AGENT
+  VIEWER
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  TRAINING
+  PAUSED
+  ARCHIVED
+  DRAFT
+}
+
+enum CallStatus {
+  INITIATED
+  RINGING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  BUSY
+  NO_ANSWER
+  CANCELLED
+  TRANSFERRED
+}
+
+enum CallDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+  COMPLETED
+  NO_SHOW
+}
+
+enum WorkflowNodeType {
+  TRIGGER
+  CONDITION
+  TRANSFER
+  CALENDAR
+  EMAIL
+  WHATSAPP
+  WEBHOOK
+  DATABASE
+  DELAY
+  CRM_CREATE
+  CRM_UPDATE
+  END
+}
+
+enum WorkflowExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum DocumentType {
+  PDF
+  DOCX
+  TXT
+  CSV
+  WEBSITE
+  FAQ
+  CUSTOM
+}
+
+enum IntegrationProvider {
+  SALESFORCE
+  HUBSPOT
+  ZENDESK
+  GOOGLE_CALENDAR
+  MICROSOFT_OUTLOOK
+  SLACK
+  ZAPIER
+  WEBHOOKS
+  STRIPE
+  SENDGRID
+  TWILIO
+  WHATSAPP_BUSINESS
+}
+
+enum NotificationType {
+  CALL_RECEIVED
+  CALL_ENDED
+  APPOINTMENT_BOOKED
+  LEAD_CREATED
+  TRANSFER_REQUESTED
+  SYSTEM_ALERT
+  BILLING
+  TEAM_INVITE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  UNPAID
+  INCOMPLETE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  INVITE
+  REVOKE
+  EXPORT
+  DEPLOY
+  PAUSE
+  CONFIGURE
+}
+
+// ============================================================
+// ORGANIZATIONS (Multi-Tenant Root)
+// ============================================================
+
+model Organization {
+  id               String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name             String
+  slug             String            @unique
+  logoUrl          String?
+  domain           String?           @unique
+  timezone         String            @default("UTC")
+  country          String            @default("US")
+  phoneCountryCode String            @default("+1")
+  planTier         PlanTier          @default(STARTER)
+  isVerified       Boolean           @default(false)
+  isActive         Boolean           @default(true)
+  trialEndsAt      DateTime?
+  stripeCustomerId String?           @unique
+  stripeSubscriptionId String?       @unique
+  settings         Json              @default("{}")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+
+  members          TeamMember[]
+  employees        AIEmployee[]
+  customers        Customer[]
+  integrations     Integration[]
+  subscriptions    Subscription[]
+  invoices         Invoice[]
+  notifications    Notification[]
+  apiKeys          APIKey[]
+  auditLogs        AuditLog[]
+  businessSettings BusinessSettings?
+  phoneNumbers     PhoneNumber[]
+  analytics        Analytics[]
+  workflows        Workflow[]
+  roles            Role[]
+  appointments     Appointment[]
+  calls            Call[]
+
+  @@index([slug])
+  @@index([domain])
+  @@index([planTier])
+  @@index([createdAt])
+  @@map("organizations")
+}
+
+// ============================================================
+// USERS
+// ============================================================
+
+model User {
+  id                String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email             String       @unique
+  passwordHash      String?
+  firstName         String
+  lastName          String
+  avatarUrl         String?
+  phoneNumber       String?
+  isEmailVerified   Boolean      @default(false)
+  isSuperAdmin      Boolean      @default(false)
+  lastLoginAt       DateTime?
+  loginCount        Int          @default(0)
+  preferredLanguage String       @default("en")
+  timezone          String       @default("UTC")
+  notifyEmail       Boolean      @default(true)
+  notifyPush        Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+
+  memberships       TeamMember[]
+  sessions          Session[]
+  auditLogs         AuditLog[]
+  sentInvites       TeamInvite[] @relation("InvitedBy")
+
+  @@index([email])
+  @@index([createdAt])
+  @@map("users")
+}
+
+// ============================================================
+// TEAM MEMBERS
+// ============================================================
+
+model TeamMember {
+  id             String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String            @db.Uuid
+  userId         String            @db.Uuid
+  role           MemberRole        @default(AGENT)
+  isActive       Boolean           @default(true)
+  joinedAt       DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleOverrides  MemberPermission[]
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+// ============================================================
+// ROLES & PERMISSIONS (RBAC)
+// ============================================================
+
+model Role {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  description    String?
+  isSystem       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    Permission[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("roles")
+}
+
+model Permission {
+  id         String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  roleId     String  @db.Uuid
+  resource   String
+  action     String
+  conditions Json?
+
+  role       Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resource, action])
+  @@index([roleId])
+  @@map("permissions")
+}
+
+model MemberPermission {
+  id       String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  memberId String     @db.Uuid
+  resource String
+  action   String
+  granted  Boolean    @default(true)
+
+  member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, resource, action])
+  @@map("member_permissions")
+}
+
+model TeamInvite {
+  id             String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String     @db.Uuid
+  email          String
+  role           MemberRole @default(AGENT)
+  token          String     @unique
+  invitedById    String     @db.Uuid
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime   @default(now())
+
+  invitedBy      User       @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  @@index([token])
+  @@index([email])
+  @@index([organizationId])
+  @@map("team_invites")
+}
+
+// ============================================================
+// AI EMPLOYEES (Central Entity)
+// ============================================================
+
+model AIEmployee {
+  id                String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String         @db.Uuid
+  name              String
+  slug              String
+  description       String?
+  status            EmployeeStatus @default(DRAFT)
+  avatarUrl         String?
+  role              String
+  personality       String?
+  systemPrompt      String         @db.Text
+  firstMessage      String?        @db.Text
+  fallbackMessage   String?        @db.Text
+  transferNumber    String?
+  maxCallDuration   Int            @default(1800)
+  silenceTimeout    Int            @default(5)
+  endCallPhrases    String[]
+  languages         String[]       @default(["en"])
+  currentLanguage   String         @default("en")
+  isTestMode        Boolean        @default(false)
+  callsHandled      Int            @default(0)
+  totalCallDuration Int            @default(0)
+  avgSatisfaction   Float?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime?
+
+  organization      Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  voiceProfile      VoiceProfile?
+  phoneNumbers      PhoneNumber[]
+  knowledgeDocuments KnowledgeDocument[]
+  workflows         Workflow[]
+  calls             Call[]
+  analytics         Analytics[]
+  appointments      Appointment[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ai_employees")
+}
+
+// ============================================================
+// VOICE PROFILES
+// ============================================================
+
+model VoiceProfile {
+  id              String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId      String     @unique @db.Uuid
+  provider        String
+  voiceId         String
+  voiceName       String
+  stability       Float      @default(0.5)
+  similarityBoost Float      @default(0.75)
+  speakingRate    Float      @default(1.0)
+  pitch           Float      @default(0.0)
+  sampleUrl       String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  employee        AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("voice_profiles")
+}
+
+// ============================================================
+// PHONE NUMBERS
+// ============================================================
+
+model PhoneNumber {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @db.Uuid
+  employeeId     String?      @db.Uuid
+  number         String       @unique
+  friendlyName   String?
+  provider       String       @default("twilio")
+  twilioSid      String?      @unique
+  country        String
+  capabilities   Json         @default("{\"voice\": true, \"sms\": false}")
+  isActive       Boolean      @default(true)
+  monthlyFee     Float        @default(1.15)
+  purchasedAt    DateTime     @default(now())
+  releasedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee       AIEmployee?  @relation(fields: [employeeId], references: [id])
+  calls          Call[]
+
+  @@index([organizationId])
+  @@index([number])
+  @@index([employeeId])
+  @@map("phone_numbers")
+}
+
+// ============================================================
+// KNOWLEDGE BASE
+// ============================================================
+
+model KnowledgeDocument {
+  id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String         @db.Uuid
+  employeeId     String         @db.Uuid
+  name           String
+  type           DocumentType
+  fileUrl        String?
+  sourceUrl      String?
+  mimeType       String?
+  sizeBytes      Int?
+  status         DocumentStatus @default(PENDING)
+  chunkCount     Int            @default(0)
+  errorMessage   String?
+  metadata       Json           @default("{}")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  employee       AIEmployee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  chunks         KnowledgeChunk[]
+
+  @@index([employeeId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id             String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId     String            @db.Uuid
+  employeeId     String            @db.Uuid
+  organizationId String            @db.Uuid
+  content        String            @db.Text
+  embedding      Unsupported("vector(1536)")?
+  tokenCount     Int
+  chunkIndex     Int
+  pageNumber     Int?
+  metadata       Json              @default("{}")
+  createdAt      DateTime          @default(now())
+
+  document       KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([employeeId])
+  @@index([organizationId])
+  // Vector index created via migration:
+  // CREATE INDEX knowledge_chunks_embedding_idx ON knowledge_chunks
+  //   USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+  @@map("knowledge_chunks")
+}
+
+// ============================================================
+// CALLS
+// ============================================================
+
+model Call {
+  id                 String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId     String        @db.Uuid
+  employeeId         String        @db.Uuid
+  phoneNumberId      String?       @db.Uuid
+  customerId         String?       @db.Uuid
+  twilioCallSid      String?       @unique
+  direction          CallDirection
+  status             CallStatus    @default(INITIATED)
+  fromNumber         String
+  toNumber           String
+  callerName         String?
+  startedAt          DateTime?
+  answeredAt         DateTime?
+  endedAt            DateTime?
+  duration           Int?
+  recordingUrl       String?
+  recordingSid       String?
+  transcriptRaw      String?       @db.Text
+  summary            String?       @db.Text
+  sentiment          String?
+  satisfactionScore  Float?
+  language           String        @default("en")
+  cost               Float?
+  wasTransferred     Boolean       @default(false)
+  transferredTo      String?
+  appointmentId      String?       @db.Uuid
+  workflowId         String?       @db.Uuid
+  errorCode          String?
+  errorMessage       String?
+  metadata           Json          @default("{}")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  organization       Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee           AIEmployee    @relation(fields: [employeeId], references: [id])
+  phoneNumber        PhoneNumber?  @relation(fields: [phoneNumberId], references: [id])
+  customer           Customer?     @relation(fields: [customerId], references: [id])
+  events             CallEvent[]
+  transcripts        CallTranscript[]
+  recordings         CallRecording[]
+  appointment        Appointment?  @relation(fields: [appointmentId], references: [id])
+  workflowExecutions WorkflowExecution[]
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@index([twilioCallSid])
+  @@index([fromNumber])
+  @@index([status])
+  @@index([startedAt])
+  @@index([customerId])
+  @@map("calls")
+}
+
+model CallEvent {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  callId    String   @db.Uuid
+  type      String
+  payload   Json     @default("{}")
+  timestamp DateTime @default(now())
+
+  call      Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@index([callId])
+  @@index([type])
+  @@index([timestamp])
+  @@map("call_events")
+}
+
+model CallTranscript {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  callId     String   @db.Uuid
+  speaker    String
+  text       String   @db.Text
+  confidence Float?
+  language   String   @default("en")
+  startMs    Int?
+  endMs      Int?
+  createdAt  DateTime @default(now())
+
+  call       Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@index([callId])
+  @@index([speaker])
+  @@map("call_transcripts")
+}
+
+model CallRecording {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  callId    String   @db.Uuid
+  url       String
+  s3Key     String?
+  duration  Int?
+  sizeBytes Int?
+  twilioSid String?
+  createdAt DateTime @default(now())
+
+  call      Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@index([callId])
+  @@map("call_recordings")
+}
+
+// ============================================================
+// CUSTOMERS (CRM)
+// ============================================================
+
+model Customer {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @db.Uuid
+  firstName      String?
+  lastName       String?
+  email          String?
+  phone          String
+  company        String?
+  language       String       @default("en")
+  timezone       String?
+  tags           String[]     @default([])
+  notes          String?      @db.Text
+  totalCalls     Int          @default(0)
+  lastCallAt     DateTime?
+  crmExternalId  String?
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  calls          Call[]
+  appointments   Appointment[]
+  crmEntries     CRMEntry[]
+
+  @@unique([organizationId, phone])
+  @@index([organizationId])
+  @@index([email])
+  @@index([phone])
+  @@index([createdAt])
+  @@map("customers")
+}
+
+model CRMEntry {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String    @db.Uuid
+  customerId     String    @db.Uuid
+  callId         String?   @db.Uuid
+  title          String
+  type           String
+  status         String    @default("OPEN")
+  priority       String    @default("MEDIUM")
+  value          Float?
+  dueDate        DateTime?
+  assignedTo     String?   @db.Uuid
+  data           Json      @default("{}")
+  closedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([type])
+  @@index([status])
+  @@map("crm_entries")
+}
+
+// ============================================================
+// APPOINTMENTS
+// ============================================================
+
+model Appointment {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String            @db.Uuid
+  employeeId      String            @db.Uuid
+  customerId      String?           @db.Uuid
+  title           String
+  description     String?
+  status          AppointmentStatus @default(PENDING)
+  scheduledAt     DateTime
+  durationMinutes Int               @default(30)
+  timezone        String            @default("UTC")
+  calendarEventId String?
+  meetingUrl      String?
+  notes           String?           @db.Text
+  reminderSent    Boolean           @default(false)
+  metadata        Json              @default("{}")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee        AIEmployee        @relation(fields: [employeeId], references: [id])
+  customer        Customer?         @relation(fields: [customerId], references: [id])
+  calls           Call[]
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@index([customerId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@map("appointments")
+}
+
+// ============================================================
+// WORKFLOWS
+// ============================================================
+
+model Workflow {
+  id             String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String     @db.Uuid
+  employeeId     String     @db.Uuid
+  name           String
+  description    String?
+  isActive       Boolean    @default(true)
+  version        Int        @default(1)
+  nodes          Json
+  edges          Json
+  variables      Json       @default("{}")
+  triggerConfig  Json       @default("{}")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee       AIEmployee          @relation(fields: [employeeId], references: [id])
+  executions     WorkflowExecution[]
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@index([isActive])
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id           String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workflowId   String                  @db.Uuid
+  callId       String?                 @db.Uuid
+  status       WorkflowExecutionStatus @default(PENDING)
+  currentNode  String?
+  variables    Json                    @default("{}")
+  logs         Json                    @default("[]")
+  startedAt    DateTime                @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+
+  workflow     Workflow                @relation(fields: [workflowId], references: [id])
+  call         Call?                   @relation(fields: [callId], references: [id])
+
+  @@index([workflowId])
+  @@index([callId])
+  @@index([status])
+  @@map("workflow_executions")
+}
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+
+model Analytics {
+  id                String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String       @db.Uuid
+  employeeId        String?      @db.Uuid
+  date              DateTime     @db.Date
+  hour              Int?
+  totalCalls        Int          @default(0)
+  inboundCalls      Int          @default(0)
+  outboundCalls     Int          @default(0)
+  completedCalls    Int          @default(0)
+  failedCalls       Int          @default(0)
+  transferredCalls  Int          @default(0)
+  totalDuration     Int          @default(0)
+  avgDuration       Float        @default(0)
+  appointmentsBooked Int         @default(0)
+  leadsCreated      Int          @default(0)
+  avgSatisfaction   Float?
+  languageBreakdown Json         @default("{}")
+  peakHour          Int?
+  revenue           Float        @default(0)
+  cost              Float        @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee          AIEmployee?  @relation(fields: [employeeId], references: [id])
+
+  @@unique([organizationId, employeeId, date, hour])
+  @@index([organizationId])
+  @@index([employeeId])
+  @@index([date])
+  @@map("analytics")
+}
+
+// ============================================================
+// INTEGRATIONS
+// ============================================================
+
+model Integration {
+  id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String              @db.Uuid
+  provider       IntegrationProvider
+  isActive       Boolean             @default(true)
+  config         Json                @default("{}")
+  credentials    Json                @default("{}")
+  lastSyncedAt   DateTime?
+  errorMessage   String?
+  webhookUrl     String?
+  webhookSecret  String?
+  scopes         String[]            @default([])
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, provider])
+  @@index([organizationId])
+  @@map("integrations")
+}
+
+// ============================================================
+// BILLING
+// ============================================================
+
+model Subscription {
+  id                   String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String             @db.Uuid
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  planTier             PlanTier
+  status               SubscriptionStatus @default(TRIALING)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  cancelledAt          DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  seats                Int                @default(1)
+  extraSeats           Int                @default(0)
+  metadata             Json               @default("{}")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  organization         Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([stripeCustomerId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id              String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String        @db.Uuid
+  stripeInvoiceId String?       @unique
+  amount          Float
+  currency        String        @default("usd")
+  status          InvoiceStatus @default(DRAFT)
+  description     String?
+  pdfUrl          String?
+  dueDate         DateTime?
+  paidAt          DateTime?
+  lineItems       Json          @default("[]")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("invoices")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id             String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String           @db.Uuid
+  userId         String?          @db.Uuid
+  type           NotificationType
+  title          String
+  body           String
+  isRead         Boolean          @default(false)
+  link           String?
+  metadata       Json             @default("{}")
+  createdAt      DateTime         @default(now())
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================================
+// SESSIONS
+// ============================================================
+
+model Session {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @db.Uuid
+  refreshToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  isRevoked    Boolean  @default(false)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ============================================================
+// API KEYS
+// ============================================================
+
+model APIKey {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  keyHash        String       @unique
+  keyPrefix      String
+  scopes         String[]     @default([])
+  isActive       Boolean      @default(true)
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+model AuditLog {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String?       @db.Uuid
+  userId         String?       @db.Uuid
+  action         AuditAction
+  resource       String
+  resourceId     String?
+  ipAddress      String?
+  userAgent      String?
+  changes        Json?
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// BUSINESS SETTINGS
+// ============================================================
+
+model BusinessSettings {
+  id                    String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId        String       @unique @db.Uuid
+  brandName             String?
+  brandColor            String?
+  supportEmail          String?
+  supportPhone          String?
+  businessHours         Json         @default("{}")
+  callRecordingEnabled  Boolean      @default(true)
+  transcriptionEnabled  Boolean      @default(true)
+  sentimentAnalysis     Boolean      @default(true)
+  autoSummary           Boolean      @default(true)
+  webhookUrl            String?
+  webhookSecret         String?
+  slackWebhookUrl       String?
+  defaultLanguage       String       @default("en")
+  maxConcurrentCalls    Int          @default(10)
+  callbackEnabled       Boolean      @default(false)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("business_settings")
+}
