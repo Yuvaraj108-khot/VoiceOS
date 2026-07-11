@@ -1,6 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { settingsService, UnifiedSettings } from '../services/settings';
 
 export default function SettingsPage() {
+  const [settings, setSettings] = useState<UnifiedSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await settingsService.getUnifiedSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error("Failed to fetch settings", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  if (loading) {
+    return <div className="pt-xxxl text-center text-on-surface-variant">Loading Settings...</div>;
+  }
+
+  if (!settings) {
+    return <div className="pt-xxxl text-center text-on-surface-variant">Failed to load settings.</div>;
+  }
+
   return (
     <>
 <div className="pt-xxxl pb-xxxl px-md md:px-xxl">
@@ -20,11 +46,11 @@ export default function SettingsPage() {
 <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
 <div className="space-y-xs">
 <label className="font-label-md text-on-surface-variant">Organization Name</label>
-<input className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md" type="text" value="Acme AI Solutions"/>
+<input className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md" type="text" defaultValue={settings.organization.name || "Acme AI Solutions"}/>
 </div>
 <div className="space-y-xs">
 <label className="font-label-md text-on-surface-variant">Industry</label>
-<select className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md">
+<select className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md" defaultValue={settings.organization.businessSettings?.industry || "Technology & SaaS"}>
 <option>Technology &amp; SaaS</option>
 <option>Healthcare</option>
 <option>Finance</option>
@@ -32,7 +58,7 @@ export default function SettingsPage() {
 </div>
 <div className="md:col-span-2 space-y-xs">
 <label className="font-label-md text-on-surface-variant">Support Email</label>
-<input className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md" type="email" value="ops@acme-ai.io"/>
+<input className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary font-body-md" type="email" defaultValue={settings.organization.businessSettings?.supportEmail || "ops@acme-ai.io"}/>
 </div>
 </div>
 </section>
@@ -155,7 +181,7 @@ export default function SettingsPage() {
 <div className="flex flex-wrap gap-lg mb-xl">
 <div className="flex-1 min-w-[200px] p-lg bg-primary text-on-primary rounded-xl">
 <p className="font-label-sm uppercase tracking-widest opacity-80 mb-sm">Current Plan</p>
-<h4 className="font-headline-md text-headline-md mb-xs">Enterprise</h4>
+<h4 className="font-headline-md text-headline-md mb-xs">{settings.organization.planTier || "Enterprise"}</h4>
 <p className="font-body-sm opacity-90">Renews on Oct 12, 2024</p>
 </div>
 <div className="flex-1 min-w-[200px] p-lg bg-surface-container-low border border-outline-variant rounded-xl">

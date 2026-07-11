@@ -1,6 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { callsService, CallDetails } from '../services/calls';
 
 export default function LiveCallCenterPage() {
+  const [callData, setCallData] = useState<CallDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLiveCall = async () => {
+      try {
+        const data = await callsService.getLiveCall();
+        setCallData(data);
+      } catch (error) {
+        console.error("Failed to fetch live call", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLiveCall();
+  }, []);
+
+  if (loading) {
+    return <div className="pt-xxxl pb-xxxl text-center text-on-surface-variant flex-grow w-full max-w-[1440px] mx-auto">Connecting to live call stream...</div>;
+  }
+
+  if (!callData) {
+    return <div className="pt-xxxl pb-xxxl text-center text-on-surface-variant flex-grow w-full max-w-[1440px] mx-auto">No active calls right now.</div>;
+  }
+
   return (
     <>
 <div className="flex-grow pt-xxl pb-xxl px-gutter max-w-[1440px] mx-auto w-full">
@@ -11,8 +37,8 @@ export default function LiveCallCenterPage() {
 <div className="w-3 h-3 bg-primary rounded-full pulse-indicator"></div>
 <span className="font-label-sm text-label-sm text-primary uppercase tracking-widest">Live Session</span>
 </div>
-<h2 className="font-headline-lg text-headline-lg text-on-surface">Inbound call from +1 (555) 0123</h2>
-<p className="font-body-md text-body-md text-on-surface-variant">Active duration: 04:12 • AI Agent ID: Alpha-9</p>
+<h2 className="font-headline-lg text-headline-lg text-on-surface">Inbound call from {callData.callerNumber}</h2>
+<p className="font-body-md text-body-md text-on-surface-variant">Active duration: {callData.duration} • AI Agent ID: {callData.agentId}</p>
 </div>
 <div className="flex gap-sm">
 <button className="flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all">
@@ -41,54 +67,24 @@ export default function LiveCallCenterPage() {
 </div>
 </div>
 <div className="flex-grow overflow-y-auto p-lg space-y-lg transcript-scroll" id="transcript">
-{/* AI Message */}
-<div className="flex gap-md max-w-[80%]">
-<div className="w-8 h-8 rounded bg-primary-container flex-shrink-0 flex items-center justify-center">
-<span className="material-symbols-outlined text-on-primary-container text-[18px]" style={{"fontVariationSettings":"'FILL' 1"}}>smart_toy</span>
-</div>
-<div className="space-y-xs">
-<span className="font-label-sm text-label-sm text-outline">VoiceOS (AI) • 10:02 AM</span>
-<div className="bg-surface-container-low p-md rounded-xl rounded-tl-none border border-outline-variant">
-<p className="font-body-md text-body-md text-on-surface">Hello! Thank you for calling VoiceOS customer support. This is Alpha-9. How can I help you today?</p>
-</div>
-</div>
-</div>
-{/* User Message */}
-<div className="flex gap-md max-w-[80%] ml-auto flex-row-reverse">
-<div className="w-8 h-8 rounded bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
-<span className="material-symbols-outlined text-on-surface-variant text-[18px]">person</span>
-</div>
-<div className="space-y-xs text-right">
-<span className="font-label-sm text-label-sm text-outline">Caller • 10:02 AM</span>
-<div className="bg-primary text-on-primary p-md rounded-xl rounded-tr-none">
-<p className="font-body-md text-body-md">Hi, I'd like to schedule an appointment for a consultation next Tuesday afternoon.</p>
-</div>
-</div>
-</div>
-{/* AI Message */}
-<div className="flex gap-md max-w-[80%]">
-<div className="w-8 h-8 rounded bg-primary-container flex-shrink-0 flex items-center justify-center">
-<span className="material-symbols-outlined text-on-primary-container text-[18px]" style={{"fontVariationSettings":"'FILL' 1"}}>smart_toy</span>
-</div>
-<div className="space-y-xs">
-<span className="font-label-sm text-label-sm text-outline">VoiceOS (AI) • 10:03 AM</span>
-<div className="bg-surface-container-low p-md rounded-xl rounded-tl-none border border-outline-variant">
-<p className="font-body-md text-body-md text-on-surface">I can certainly help with that. Let me check the availability for Tuesday. We have slots at 2:00 PM and 4:30 PM. Would either of those work for you?</p>
-</div>
-</div>
-</div>
-{/* User Message */}
-<div className="flex gap-md max-w-[80%] ml-auto flex-row-reverse">
-<div className="w-8 h-8 rounded bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
-<span className="material-symbols-outlined text-on-surface-variant text-[18px]">person</span>
-</div>
-<div className="space-y-xs text-right">
-<span className="font-label-sm text-label-sm text-outline">Caller • 10:04 AM</span>
-<div className="bg-primary text-on-primary p-md rounded-xl rounded-tr-none">
-<p className="font-body-md text-body-md">2:00 PM sounds great. What do I need to bring?</p>
-</div>
-</div>
-</div>
+
+{callData.transcript.map((msg, index) => {
+  const isAI = msg.role === 'AI';
+  return (
+    <div key={index} className={`flex gap-md max-w-[80%] ${!isAI ? 'ml-auto flex-row-reverse' : ''}`}>
+    <div className={`w-8 h-8 rounded flex-shrink-0 flex items-center justify-center ${isAI ? 'bg-primary-container' : 'bg-surface-container-highest'}`}>
+    <span className={`material-symbols-outlined text-[18px] ${isAI ? 'text-on-primary-container' : 'text-on-surface-variant'}`} style={isAI ? {"fontVariationSettings":"'FILL' 1"} : {}}>{isAI ? 'smart_toy' : 'person'}</span>
+    </div>
+    <div className={`space-y-xs ${!isAI ? 'text-right' : ''}`}>
+    <span className="font-label-sm text-label-sm text-outline">{isAI ? 'VoiceOS (AI)' : 'Caller'} • {msg.timestamp}</span>
+    <div className={`${isAI ? 'bg-surface-container-low p-md rounded-xl rounded-tl-none border border-outline-variant' : 'bg-primary text-on-primary p-md rounded-xl rounded-tr-none'}`}>
+    <p className={`font-body-md text-body-md ${isAI ? 'text-on-surface' : ''}`}>{msg.message}</p>
+    </div>
+    </div>
+    </div>
+  );
+})}
+
 {/* AI Preview (Pulsing) */}
 <div className="flex gap-md max-w-[80%] opacity-80 italic">
 <div className="w-8 h-8 rounded bg-secondary-container flex-shrink-0 flex items-center justify-center animate-pulse">
@@ -104,7 +100,7 @@ export default function LiveCallCenterPage() {
 </div>
 </div>
 <div className="bg-surface-container p-md rounded-xl rounded-tl-none border border-outline-variant border-dashed">
-<p className="font-body-md text-body-md text-on-surface-variant">Perfect, I've reserved Tuesday at 2:00 PM for you. You'll just need to bring a valid ID and any documents related to your inquiry...</p>
+<p className="font-body-md text-body-md text-on-surface-variant">Processing next response...</p>
 </div>
 </div>
 </div>
@@ -131,24 +127,24 @@ export default function LiveCallCenterPage() {
 <div>
 <div className="flex justify-between items-center mb-xs">
 <span className="font-body-sm text-body-sm text-outline">Sentiment</span>
-<span className="font-label-md text-label-md text-primary flex items-center gap-xs">
-<span className="material-symbols-outlined text-[16px]">mood</span>
-                                        Positive
+<span className={`font-label-md text-label-md flex items-center gap-xs ${callData.sentiment === 'Positive' ? 'text-primary' : callData.sentiment === 'Negative' ? 'text-error' : 'text-on-surface-variant'}`}>
+<span className="material-symbols-outlined text-[16px]">{callData.sentiment === 'Positive' ? 'mood' : callData.sentiment === 'Negative' ? 'mood_bad' : 'sentiment_neutral'}</span>
+                                        {callData.sentiment}
                                     </span>
 </div>
 <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-<div className="h-full bg-primary rounded-full" style={{"width":"85%"}}></div>
+<div className={`h-full rounded-full ${callData.sentiment === 'Positive' ? 'bg-primary' : callData.sentiment === 'Negative' ? 'bg-error' : 'bg-outline'}`} style={{"width":`${callData.sentimentScore}%`}}></div>
 </div>
 </div>
 {/* Intent */}
 <div className="bg-tertiary-fixed rounded-lg p-md border border-outline-variant">
 <span className="font-label-sm text-label-sm text-on-tertiary-fixed-variant block mb-xs">DETECTED INTENT</span>
 <div className="flex items-center gap-sm">
-<span className="material-symbols-outlined text-on-tertiary-fixed">calendar_today</span>
-<span className="font-headline-md text-[18px] text-on-tertiary-fixed font-bold">Schedule Appointment</span>
+<span className="material-symbols-outlined text-on-tertiary-fixed">category</span>
+<span className="font-headline-md text-[18px] text-on-tertiary-fixed font-bold">{callData.intent}</span>
 </div>
 <div className="mt-xs text-on-tertiary-fixed-variant font-body-sm text-body-sm">
-                                    Confidence: 98.4%
+                                    Confidence: {callData.confidence}%
                                 </div>
 </div>
 </div>
@@ -158,15 +154,15 @@ export default function LiveCallCenterPage() {
 <div className="space-y-sm">
 <div className="flex justify-between items-center">
 <span className="font-body-sm text-body-sm text-outline">Caller Name</span>
-<span className="font-label-md text-label-md text-on-surface">Mark Stevenson (Unverified)</span>
+<span className="font-label-md text-label-md text-on-surface">{callData.callerName}</span>
 </div>
 <div className="flex justify-between items-center">
 <span className="font-body-sm text-body-sm text-outline">Account Status</span>
-<span className="bg-secondary-container text-on-secondary-container px-xs py-[2px] rounded text-[10px] font-bold uppercase">Standard</span>
+<span className="bg-secondary-container text-on-secondary-container px-xs py-[2px] rounded text-[10px] font-bold uppercase">{callData.accountStatus}</span>
 </div>
 <div className="flex justify-between items-center">
 <span className="font-body-sm text-body-sm text-outline">Language</span>
-<span className="font-label-md text-label-md text-on-surface">English (US)</span>
+<span className="font-label-md text-label-md text-on-surface">{callData.language}</span>
 </div>
 </div>
 </div>
@@ -180,7 +176,7 @@ export default function LiveCallCenterPage() {
 </div>
 <div className="bg-surface-container-low rounded-lg p-md border border-outline-variant border-dashed">
 <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed italic">
-                            "Caller requested a consultation appointment for next Tuesday. Agent offered 2:00 PM and 4:30 PM slots. Caller selected 2:00 PM. Agent is currently explaining requirements..."
+                            "{callData.summary}"
                         </p>
 </div>
 <button className="w-full mt-lg py-sm bg-surface border border-outline text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-highest transition-all flex justify-center items-center gap-xs">
