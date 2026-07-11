@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { workflowsService, Workflow } from '../services/workflows';
-
+import { useState, useEffect } from 'react';
+import { workflowsService } from '../services/workflows';
+import type { Workflow } from '../services/workflows';
 export default function WorkflowBuilderPage() {
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [activeWorkflow, setActiveWorkflow] = useState<Workflow | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -10,7 +9,6 @@ export default function WorkflowBuilderPage() {
     const fetchWorkflows = async () => {
       try {
         const data = await workflowsService.list();
-        setWorkflows(data);
         if (data.length > 0) {
           setActiveWorkflow(data[0]);
         }
@@ -48,10 +46,9 @@ export default function WorkflowBuilderPage() {
 {/* Vertical Node Flow */}
 <div className="relative flex flex-col items-center gap-xl pb-xxl">
 
-{activeWorkflow.nodes.map((node, index) => {
+{activeWorkflow.nodes.map((node: any, index: number) => {
   const isTrigger = node.type === 'trigger';
   const isCondition = node.type === 'condition';
-  const isAction = node.type === 'action';
   const isIntegration = node.type === 'integration';
   
   let icon = 'smart_toy';

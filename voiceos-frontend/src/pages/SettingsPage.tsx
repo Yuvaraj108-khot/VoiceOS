@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { settingsService, UnifiedSettings } from '../services/settings';
-
+import { useState, useEffect } from 'react';
+import { settingsService } from '../services/settings';
+import type { UnifiedSettings } from '../services/settings';
 export default function SettingsPage() {
   const [settings, setSettings] = useState<UnifiedSettings | null>(null);
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { analyticsService, AnalyticsOverview } from '../services/analytics';
-
+import { useState, useEffect } from 'react';
+import { analyticsService } from '../services/analytics';
+import type { AnalyticsOverview } from '../services/analytics';
 export default function AnalyticsPage() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);

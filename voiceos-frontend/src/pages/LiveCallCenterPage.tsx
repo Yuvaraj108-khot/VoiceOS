@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { callsService, CallDetails } from '../services/calls';
-
+import { useState, useEffect } from 'react';
+import { callsService } from '../services/calls';
+import type { CallDetails } from '../services/calls';
 export default function LiveCallCenterPage() {
   const [callData, setCallData] = useState<CallDetails | null>(null);
   const [loading, setLoading] = useState(true);

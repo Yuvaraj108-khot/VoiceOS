@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { notificationsService, Notification } from '../services/notifications';
-
+import { useState, useEffect } from 'react';
+import { notificationsService } from '../services/notifications';
+import type { Notification } from '../services/notifications';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);

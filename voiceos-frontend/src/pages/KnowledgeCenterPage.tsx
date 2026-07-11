@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { knowledgeService, KnowledgeDocument } from '../services/knowledge';
-
+import { useState, useEffect } from 'react';
+import { knowledgeService } from '../services/knowledge';
+import type { KnowledgeDocument } from '../services/knowledge';
 export default function KnowledgeCenterPage() {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [loading, setLoading] = useState(true);

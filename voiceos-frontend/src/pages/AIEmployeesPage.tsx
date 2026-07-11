@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { aiEmployeesService, AIEmployee } from '../services/aiEmployees';
-
+import { aiEmployeesService } from '../services/aiEmployees';
+import type { AIEmployee } from '../services/aiEmployees';
 export default function AIEmployeesPage() {
   const [employees, setEmployees] = useState<AIEmployee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,7 @@ export default function AIEmployeesPage() {
 {loading ? (
   <div className="col-span-full text-center py-xl text-on-surface-variant">Loading AI Employees...</div>
 ) : (
-  employees.map((employee, index) => (
+  employees.map((employee: any, index: number) => (
     <article key={employee.id} className={`employee-card bg-white border border-outline-variant rounded-xl overflow-hidden group flex flex-col animate-entrance delay-${(index % 4) + 1}`}>
     <div className="p-lg flex-1">
     <div className="flex justify-between items-start mb-lg">

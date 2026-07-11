@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { analyticsService, AnalyticsOverview } from '../services/analytics';
+import { useState, useEffect } from 'react';
+import { analyticsService } from '../services/analytics';
+import type { AnalyticsOverview } from '../services/analytics';
 import { Link } from 'react-router-dom';
 
 export default function DashboardPage() {
