@@ -1,6 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { analyticsService, AnalyticsOverview } from '../services/analytics';
 
 export default function AnalyticsPage() {
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOverview = async () => {
+      try {
+        const data = await analyticsService.getOverview();
+        setOverview(data);
+      } catch (error) {
+        console.error("Failed to load analytics metrics", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOverview();
+  }, []);
+
   return (
     <>
 <div className="max-w-[1440px] mx-auto px-md md:px-lg lg:px-xl py-xl space-y-xl">
@@ -45,7 +63,7 @@ export default function AnalyticsPage() {
 </div>
 <div className="mt-xl">
 <p className="font-label-md text-label-md text-on-surface-variant">Total Calls Handled</p>
-<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">12,482</h3>
+<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">{loading ? '...' : overview?.totalCalls.toLocaleString() || '0'}</h3>
 </div>
 </div>
 {/* Stat 2 */}
@@ -60,7 +78,7 @@ export default function AnalyticsPage() {
 </div>
 <div className="mt-xl">
 <p className="font-label-md text-label-md text-on-surface-variant">Avg. Call Duration</p>
-<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">4m 12s</h3>
+<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">{loading ? '...' : overview?.avgDuration || '0m 0s'}</h3>
 </div>
 </div>
 {/* Stat 3 */}
@@ -76,7 +94,7 @@ export default function AnalyticsPage() {
 </div>
 <div className="mt-xl">
 <p className="font-label-md text-label-md text-on-surface-variant">Conversion Rate</p>
-<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">24.8%</h3>
+<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">{loading ? '...' : `${(overview?.successRate || 0).toFixed(1)}%`}</h3>
 </div>
 </div>
 {/* Stat 4 */}
@@ -92,7 +110,7 @@ export default function AnalyticsPage() {
 </div>
 <div className="mt-xl">
 <p className="font-label-md text-label-md text-on-surface-variant">Customer CSAT</p>
-<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">4.8/5.0</h3>
+<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">{loading ? '...' : `${((overview?.successRate || 0) * 5).toFixed(1)}/5.0`}</h3>
 </div>
 </div>
 </section>

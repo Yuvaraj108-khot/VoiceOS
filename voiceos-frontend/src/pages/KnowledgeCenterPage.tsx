@@ -1,6 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { knowledgeService, KnowledgeDocument } from '../services/knowledge';
 
 export default function KnowledgeCenterPage() {
+  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const data = await knowledgeService.list();
+        setDocuments(data);
+      } catch (error) {
+        console.error("Failed to load knowledge documents", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDocuments();
+  }, []);
+
+  const openModal = () => {
+    console.log("Add Source clicked");
+  };
+
   return (
     <>
 <div className="pt-xxxl px-md md:px-margin max-w-[1440px] mx-auto">
@@ -11,7 +33,7 @@ export default function KnowledgeCenterPage() {
 <p className="font-body-md text-on-surface-variant max-w-2xl">Manage the collective intelligence of your VoiceOS instance. Upload documents, sync websites, and monitor processing status in real-time.</p>
 </div>
 <div className="flex items-center gap-sm">
-<button className="bg-primary text-on-primary font-label-md py-sm px-lg rounded-xl flex items-center gap-xs hover:brightness-110 active:scale-95 transition-all" onClick="openModal()">
+<button className="bg-primary text-on-primary font-label-md py-sm px-lg rounded-xl flex items-center gap-xs hover:brightness-110 active:scale-95 transition-all" onClick={openModal}>
 <span className="material-symbols-outlined text-[20px]" data-icon="add">add</span>
                     Add Source
                 </button>
@@ -35,9 +57,9 @@ export default function KnowledgeCenterPage() {
 <p className="font-label-md mb-xs opacity-90">Live Syncing</p>
 <div className="flex items-center gap-sm">
 <div className="w-2 h-2 bg-on-primary-container rounded-full pulse-ai"></div>
-<p className="font-headline-md font-bold">2 Sources</p>
+<p className="font-headline-md font-bold">{documents.filter(d => d.status === 'Syncing').length} Sources</p>
 </div>
-<p className="font-body-sm mt-sm opacity-80">Syncing website and processing FAQ sheet.</p>
+<p className="font-body-sm mt-sm opacity-80">Currently processing your recent uploads.</p>
 </div>
 </div>
 {/* Search & Filter Bar */}
@@ -59,73 +81,40 @@ export default function KnowledgeCenterPage() {
 </div>
 {/* Library Grid (Bento Style) */}
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-{/* File: Corporate Handbook */}
-<div className="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group">
-<div className="flex justify-between items-start mb-lg">
-<div className="p-sm bg-surface-container-highest rounded-lg text-primary">
-<span className="material-symbols-outlined text-[32px]" data-icon="picture_as_pdf">picture_as_pdf</span>
-</div>
-<div className="px-sm py-xs bg-[#E8F5E9] text-[#2E7D32] rounded font-label-sm flex items-center gap-xs">
-<span className="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span>
-                        Indexed
-                    </div>
-</div>
-<h4 className="font-headline-md text-on-surface mb-xs truncate" title="Corporate_Handbook_2024.pdf">Corporate_Handbook_2024.pdf</h4>
-<p className="font-body-sm text-on-surface-variant mb-lg">Last updated 2 days ago • 2.4 MB</p>
-<div className="mt-auto flex justify-between items-center pt-md border-t border-outline-variant">
-<p className="font-label-sm text-outline">PDF Document</p>
-<div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
-<button className="p-xs hover:bg-surface-container-low rounded"><span className="material-symbols-outlined text-[20px]" data-icon="download">download</span></button>
-<button className="p-xs hover:bg-surface-container-low rounded text-error"><span className="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
-</div>
-</div>
-</div>
-{/* Website: VoiceOS Docs */}
-<div className="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group relative overflow-hidden">
-<div className="flex justify-between items-start mb-lg">
-<div className="p-sm bg-surface-container-highest rounded-lg text-tertiary">
-<span className="material-symbols-outlined text-[32px]" data-icon="language">language</span>
-</div>
-<div className="px-sm py-xs bg-secondary-container text-on-secondary-container rounded font-label-sm flex items-center gap-xs">
-<span className="material-symbols-outlined text-[14px] animate-spin" data-icon="sync">sync</span>
-                        Syncing 82%
-                    </div>
-</div>
-<h4 className="font-headline-md text-on-surface mb-xs truncate" title="Website: voiceos.ai/docs">Website: voiceos.ai/docs</h4>
-<p className="font-body-sm text-on-surface-variant mb-lg">Active crawl in progress...</p>
-<div className="w-full bg-surface-container-highest h-1 rounded-full mb-lg overflow-hidden">
-<div className="bg-primary h-full rounded-full" style={{"width":"82%"}}></div>
-</div>
-<div className="mt-auto flex justify-between items-center pt-md border-t border-outline-variant">
-<p className="font-label-sm text-outline">Web Source</p>
-<div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
-<button className="p-xs hover:bg-surface-container-low rounded"><span className="material-symbols-outlined text-[20px]" data-icon="settings">settings</span></button>
-<button className="p-xs hover:bg-surface-container-low rounded text-error"><span className="material-symbols-outlined text-[20px]" data-icon="link_off">link_off</span></button>
-</div>
-</div>
-</div>
-{/* Spreadsheet: FAQ Sheet */}
-<div className="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group">
-<div className="flex justify-between items-start mb-lg">
-<div className="p-sm bg-surface-container-highest rounded-lg text-[#1D6F42]">
-<span className="material-symbols-outlined text-[32px]" data-icon="description">description</span>
-</div>
-<div className="px-sm py-xs bg-tertiary-fixed text-on-tertiary-fixed rounded font-label-sm flex items-center gap-xs">
-<span className="material-symbols-outlined text-[14px] pulse-ai" data-icon="hourglass_empty">hourglass_empty</span>
-                        Processing
-                    </div>
-</div>
-<h4 className="font-headline-md text-on-surface mb-xs truncate" title="FAQ_Sheet.xlsx">FAQ_Sheet.xlsx</h4>
-<p className="font-body-sm text-on-surface-variant mb-lg">Added today • 450 KB</p>
-<div className="mt-auto flex justify-between items-center pt-md border-t border-outline-variant">
-<p className="font-label-sm text-outline">XLSX Spreadsheet</p>
-<div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
-<button className="p-xs hover:bg-surface-container-low rounded text-error"><span className="material-symbols-outlined text-[20px]" data-icon="cancel">cancel</span></button>
-</div>
-</div>
-</div>
+
+{loading ? (
+  <div className="col-span-full text-center py-xl text-on-surface-variant">Loading Knowledge Base...</div>
+) : (
+  documents.map(doc => (
+    <div key={doc.id} className="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group relative overflow-hidden">
+    <div className="flex justify-between items-start mb-lg">
+    <div className={`p-sm rounded-lg ${doc.type === 'document' ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-highest text-tertiary'}`}>
+    <span className="material-symbols-outlined text-[32px]" data-icon={doc.type === 'document' ? 'picture_as_pdf' : 'language'}>{doc.type === 'document' ? 'picture_as_pdf' : 'language'}</span>
+    </div>
+    <div className={`px-sm py-xs rounded font-label-sm flex items-center gap-xs ${doc.status === 'Active' ? 'bg-[#E8F5E9] text-[#2E7D32]' : doc.status === 'Syncing' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-highest text-on-surface-variant'}`}>
+    <span className={`material-symbols-outlined text-[14px] ${doc.status === 'Syncing' ? 'animate-spin' : ''}`} data-icon={doc.status === 'Active' ? 'check_circle' : 'sync'}>{doc.status === 'Active' ? 'check_circle' : 'sync'}</span>
+                            {doc.status}
+                        </div>
+    </div>
+    <h4 className="font-headline-md text-on-surface mb-xs truncate" title={doc.title}>{doc.title}</h4>
+    <p className="font-body-sm text-on-surface-variant mb-lg">Last updated {new Date(doc.lastUpdated).toLocaleDateString()} {doc.size ? `• ${(doc.size / 1024 / 1024).toFixed(1)} MB` : ''}</p>
+    {doc.status === 'Syncing' && (
+      <div className="w-full bg-surface-container-highest h-1 rounded-full mb-lg overflow-hidden">
+      <div className="bg-primary h-full rounded-full" style={{"width":"50%"}}></div>
+      </div>
+    )}
+    <div className="mt-auto flex justify-between items-center pt-md border-t border-outline-variant">
+    <p className="font-label-sm text-outline">{doc.type === 'document' ? 'Document' : 'Web Source'}</p>
+    <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+    <button className="p-xs hover:bg-surface-container-low rounded text-error" onClick={() => knowledgeService.delete(doc.id)}><span className="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
+    </div>
+    </div>
+    </div>
+  ))
+)}
+
 {/* Placeholder for Empty State/Call to Action */}
-<button className="border-2 border-dashed border-outline-variant rounded-xl p-lg flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all group min-h-[220px]" onClick="openModal()">
+<button className="border-2 border-dashed border-outline-variant rounded-xl p-lg flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all group min-h-[220px]" onClick={openModal}>
 <div className="p-md rounded-full bg-surface-container-highest mb-md group-hover:scale-110 transition-transform">
 <span className="material-symbols-outlined text-[40px]" data-icon="upload_file">upload_file</span>
 </div>

@@ -1,6 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../api';
 
 export default function SignInPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      // Assuming the backend returns { token: "...", user: {...} }
+      const response = await api.post('/auth/login', { email, password });
+      login(response.token, response.user);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface p-6">
       <div className="w-full max-w-md">
@@ -15,11 +42,16 @@ export default function SignInPage() {
 </header>
 {/* Login Container */}
 <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-xl login-card">
-<form className="space-y-lg">
+<form className="space-y-lg" onSubmit={handleSubmit}>
+{error && (
+  <div className="bg-error/10 text-error p-sm rounded-lg text-sm text-center">
+    {error}
+  </div>
+)}
 {/* Field: Business Email */}
 <div>
 <label className="block font-label-md text-label-md text-on-surface-variant mb-xs" htmlFor="email">Business Email</label>
-<input className="w-full h-[48px] px-md rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-body-md" id="email" name="email" placeholder="name@company.com" type="email"/>
+<input className="w-full h-[48px] px-md rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-body-md" id="email" name="email" placeholder="name@company.com" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
 </div>
 {/* Field: Password */}
 <div>
@@ -28,16 +60,16 @@ export default function SignInPage() {
 <a className="font-label-sm text-label-sm text-primary hover:underline transition-all" href="#">Forgot password?</a>
 </div>
 <div className="relative">
-<input className="w-full h-[48px] px-md rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-body-md" id="password" name="password" placeholder="••••••••" type="password"/>
+<input className="w-full h-[48px] px-md rounded-lg border border-outline-variant bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-body-md" id="password" name="password" placeholder="••••••••" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required/>
 <button className="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
 <span className="material-symbols-outlined text-[20px]">visibility</span>
 </button>
 </div>
 </div>
 {/* Primary CTA */}
-<button className="w-full h-[48px] bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-sm" type="submit">
-                    Sign In
-                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+<button className="w-full h-[48px] bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-sm disabled:opacity-50" type="submit" disabled={loading}>
+                    {loading ? 'Signing In...' : 'Sign In'}
+                    {!loading && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
 </button>
 {/* Divider */}
 <div className="relative flex items-center py-md">

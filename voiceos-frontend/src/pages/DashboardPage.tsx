@@ -1,6 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { analyticsService, AnalyticsOverview } from '../services/analytics';
+import { Link } from 'react-router-dom';
 
 export default function DashboardPage() {
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOverview = async () => {
+      try {
+        const data = await analyticsService.getOverview();
+        setOverview(data);
+      } catch (error) {
+        console.error("Failed to load dashboard metrics", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOverview();
+  }, []);
+
   return (
     <>
 <div className="flex-1 p-lg md:p-xxl space-y-xl max-w-[1440px] mx-auto w-full">
@@ -8,17 +27,17 @@ export default function DashboardPage() {
 <section className="flex flex-col md:flex-row md:items-end justify-between gap-md">
 <div>
 <h2 className="font-headline-lg text-headline-lg text-on-surface">Executive Overview</h2>
-<p className="font-body-md text-body-md text-on-surface-variant">Real-time performance across 12 active AI instances.</p>
+<p className="font-body-md text-body-md text-on-surface-variant">Real-time performance across {overview?.activeEmployees || 0} active AI instances.</p>
 </div>
 <div className="flex items-center gap-sm">
 <button className="button-hover bg-surface border border-outline-variant text-on-surface px-md py-sm rounded-lg font-label-md flex items-center gap-xs hover:bg-surface-container-low">
 <span className="material-symbols-outlined text-[18px]">calendar_today</span>
                     Last 24 Hours
                 </button>
-<button className="button-hover bg-primary text-on-primary px-md py-sm rounded-lg font-label-md flex items-center gap-xs hover:bg-primary-container shadow-md">
+<Link to="/create-employee" className="button-hover bg-primary text-on-primary px-md py-sm rounded-lg font-label-md flex items-center gap-xs hover:bg-primary-container shadow-md">
 <span className="material-symbols-outlined text-[18px]">add</span>
                     Deploy Agent
-                </button>
+                </Link>
 </div>
 </section>
 {/* Metrics Bento Grid */}
@@ -33,7 +52,7 @@ export default function DashboardPage() {
 </div>
 <div className="mt-xl">
 <p className="font-label-sm text-label-sm text-on-surface-variant uppercase">Calls Today</p>
-<h3 className="font-display text-display leading-tight">2,481</h3>
+<h3 className="font-display text-display leading-tight">{loading ? '...' : overview?.totalCalls.toLocaleString() || '0'}</h3>
 </div>
 <div className="mt-md flex items-end gap-xs h-12">
 <div className="flex-1 bg-primary-fixed h-4 rounded-t-sm animate-draw-up" style={{"animationDelay":"100ms"}}></div>
@@ -54,7 +73,7 @@ export default function DashboardPage() {
 <div className="mt-xl">
 <p className="font-label-sm text-label-sm text-on-surface-variant uppercase">Avg. Satisfaction</p>
 <div className="flex items-baseline gap-xs">
-<h3 className="font-display text-display leading-tight">4.9</h3>
+<h3 className="font-display text-display leading-tight">{loading ? '...' : ((overview?.successRate || 0) * 5).toFixed(1)}</h3>
 <span className="text-body-lg text-outline">/ 5.0</span>
 </div>
 </div>
