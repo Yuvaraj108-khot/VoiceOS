@@ -113,8 +113,5 @@ export default function AIEmployeesPage() {
     </>
   );
 }
-    </>
-  );
-}
 
 

@@ -3,12 +3,11 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import MainLayout from './layouts/MainLayout';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
-import EmployeesPage from './pages/EmployeesPage';
+import CreateEmployeePage from './pages/CreateEmployeePage';
 import AIEmployeesPage from './pages/AIEmployeesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import SignInPage from './pages/SignInPage';
-import CreateEmployeePage from './pages/CreateEmployeePage';
 import LiveCallCenterPage from './pages/LiveCallCenterPage';
 import WorkflowBuilderPage from './pages/WorkflowBuilderPage';
 import KnowledgeCenterPage from './pages/KnowledgeCenterPage';
@@ -27,7 +26,7 @@ function App() {
           
           <Route element={<MainLayout />}>
             <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="employees" element={<EmployeesPage />} />
+            <Route path="employees" element={<AIEmployeesPage />} />
             <Route path="ai-employees" element={<AIEmployeesPage />} />
             <Route path="create-employee" element={<CreateEmployeePage />} />
             <Route path="live-call-center" element={<LiveCallCenterPage />} />

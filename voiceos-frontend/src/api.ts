@@ -34,5 +34,15 @@ export const api = {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
+  },
+  
+  put: async (endpoint: string, body?: any) => {
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
   }
 };
