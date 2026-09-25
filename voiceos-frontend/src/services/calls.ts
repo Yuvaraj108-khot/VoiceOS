@@ -1,4 +1,6 @@
 
+import { api } from '../api';
+
 export interface CallParticipant {
   role: 'AI' | 'Caller';
   message: string;
@@ -22,11 +24,31 @@ export interface CallDetails {
   summary: string;
 }
 
+export interface TriggerCallPayload {
+  employeeId: string;
+  toNumber: string;
+  customerId?: string;
+  variables?: Record<string, any>;
+}
+
+export interface TriggerCallResponse {
+  id: string;
+  twilioCallSid?: string;
+  status: string;
+  toNumber: string;
+  fromNumber?: string;
+}
+
 export const callsService = {
+  // Trigger an outbound phone call
+  triggerOutboundCall: async (payload: TriggerCallPayload): Promise<TriggerCallResponse> => {
+    const res = await api.post('/calls/trigger', payload);
+    return res.data || res;
+  },
+
+
   // Mock live call details for the Live Call Center page
   getLiveCall: async (): Promise<CallDetails> => {
-    // In a real app, this might connect to a WebSocket or poll an endpoint
-    // We'll simulate fetching live call data here for the UI
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
@@ -70,3 +92,4 @@ export const callsService = {
     });
   }
 };
+

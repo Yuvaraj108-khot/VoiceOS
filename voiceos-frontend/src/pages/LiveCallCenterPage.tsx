@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { callsService } from '../services/calls';
 import type { CallDetails } from '../services/calls';
+import { PhoneDialerModal } from '../components/PhoneDialerModal';
+
 export default function LiveCallCenterPage() {
   const [callData, setCallData] = useState<CallDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDialerOpen, setIsDialerOpen] = useState(false);
 
   useEffect(() => {
     const fetchLiveCall = async () => {
@@ -24,7 +27,21 @@ export default function LiveCallCenterPage() {
   }
 
   if (!callData) {
-    return <div className="pt-xxxl pb-xxxl text-center text-on-surface-variant flex-grow w-full max-w-[1440px] mx-auto">No active calls right now.</div>;
+    return (
+      <div className="pt-xxxl pb-xxxl text-center text-on-surface-variant flex-grow w-full max-w-[1440px] mx-auto flex flex-col items-center gap-lg">
+        <span className="material-symbols-outlined text-[64px] text-outline">call_end</span>
+        <p className="font-headline-md">No active calls right now.</p>
+        <p className="font-body-md">Live calls will appear here in real-time when connected.</p>
+        <button 
+          onClick={() => setIsDialerOpen(true)}
+          className="mt-md px-lg py-md bg-primary text-on-primary rounded-xl font-label-md font-bold hover:brightness-110 flex items-center gap-xs shadow-md"
+        >
+          <span className="material-symbols-outlined text-[20px]">call</span>
+          Make an Outbound Call Now
+        </button>
+        <PhoneDialerModal isOpen={isDialerOpen} onClose={() => setIsDialerOpen(false)} />
+      </div>
+    );
   }
 
   return (
@@ -40,17 +57,27 @@ export default function LiveCallCenterPage() {
 <h2 className="font-headline-lg text-headline-lg text-on-surface">Inbound call from {callData.callerNumber}</h2>
 <p className="font-body-md text-body-md text-on-surface-variant">Active duration: {callData.duration} • AI Agent ID: {callData.agentId}</p>
 </div>
-<div className="flex gap-sm">
-<button className="flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all">
+<div className="flex flex-wrap gap-sm">
+<button 
+  onClick={() => setIsDialerOpen(true)}
+  className="flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md font-bold hover:brightness-110 transition-all shadow-xs"
+>
+  <span className="material-symbols-outlined text-[20px]">call</span>
+  New Outbound Call
+</button>
+<button className="flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all" onClick={() => alert('Connecting to live audio stream...')}>
 <span className="material-symbols-outlined text-[20px]">headphones</span>
                     Listen Live
                 </button>
-<button className="flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:brightness-110 transition-all shadow-sm">
+<button className="flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-all" onClick={() => alert('Taking over the call...')}>
 <span className="material-symbols-outlined text-[20px]">transfer_within_a_station</span>
                     Take Over
                 </button>
 </div>
 </div>
+
+<PhoneDialerModal isOpen={isDialerOpen} onClose={() => setIsDialerOpen(false)} />
+
 {/* Mission Control Grid */}
 <div className="grid grid-cols-12 gap-gutter">
 {/* Left Column: Real-time Transcript */}
@@ -109,7 +136,7 @@ export default function LiveCallCenterPage() {
 <div className="flex items-center gap-sm">
 <span className="font-label-sm text-label-sm text-on-surface-variant">Press SPACE to talk directly</span>
 </div>
-<button className="text-primary font-label-md text-label-md flex items-center gap-xs hover:underline">
+<button className="text-primary font-label-md text-label-md flex items-center gap-xs hover:underline" onClick={() => alert('Opening CRM history...')}>
 <span className="material-symbols-outlined text-[18px]">history</span>
                             View CRM History
                         </button>
@@ -170,7 +197,7 @@ export default function LiveCallCenterPage() {
 <div className="bg-surface border border-outline-variant rounded-xl p-lg">
 <div className="flex justify-between items-center mb-md">
 <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Draft Summary</h3>
-<button className="text-primary hover:text-primary-container transition-colors">
+<button className="text-primary hover:text-primary-container transition-colors" onClick={() => alert('Regenerating AI summary...')}>
 <span className="material-symbols-outlined">refresh</span>
 </button>
 </div>
@@ -179,18 +206,18 @@ export default function LiveCallCenterPage() {
                             "{callData.summary}"
                         </p>
 </div>
-<button className="w-full mt-lg py-sm bg-surface border border-outline text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-highest transition-all flex justify-center items-center gap-xs">
+<button className="w-full mt-lg py-sm bg-surface border border-outline text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-highest transition-all flex justify-center items-center gap-xs" onClick={() => alert('Full call report generated!')}>
 <span className="material-symbols-outlined text-[20px]">auto_fix</span>
                         Generate Full Report
                     </button>
 </div>
 {/* Related Actions */}
 <div className="grid grid-cols-2 gap-sm">
-<div className="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary transition-all group">
+<div className="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary transition-all group" onClick={() => alert('Email link sent!')}>
 <span className="material-symbols-outlined text-outline group-hover:text-primary mb-xs">mail</span>
 <span className="font-label-sm text-label-sm text-on-surface-variant">Email Link</span>
 </div>
-<div className="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary transition-all group">
+<div className="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary transition-all group" onClick={() => alert('SMS sent!')}>
 <span className="material-symbols-outlined text-outline group-hover:text-primary mb-xs">sms</span>
 <span className="font-label-sm text-label-sm text-on-surface-variant">Send SMS</span>
 </div>
@@ -201,5 +228,3 @@ export default function LiveCallCenterPage() {
     </>
   );
 }
-
-

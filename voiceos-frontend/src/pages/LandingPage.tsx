@@ -60,7 +60,7 @@ export default function LandingPage() {
               
               <div className="flex flex-wrap gap-md pt-md">
                 <Link to="/employees" className="bg-primary text-on-primary font-label-md text-label-md px-xxl py-md rounded-xl hover:shadow-lg transition-all active:scale-95">Deploy Now</Link>
-                <button className="bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-xxl py-md rounded-xl hover:bg-surface-container-low transition-all">Book a Demo</button>
+                <button className="bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-xxl py-md rounded-xl hover:bg-surface-container-low transition-all" onClick={() => alert("Booking a demo!")}>Book a Demo</button>
               </div>
             </div>
             
@@ -206,7 +206,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]">check_circle</span> Standard Voice Synthesis</li>
                 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]">check_circle</span> Email Support</li>
               </ul>
-              <button className="w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors">Choose Standard</button>
+              <Link to="/dashboard" className="block text-center w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors">Choose Standard</Link>
             </div>
             
             {/* Enterprise (Highlighted) */}
@@ -245,7 +245,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]">check_circle</span> Custom Model Training</li>
                 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]">check_circle</span> White-label Branding</li>
               </ul>
-              <button className="w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors">Talk to Sales</button>
+              <button className="w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors" onClick={() => alert("Sales contacted!")}>Talk to Sales</button>
             </div>
           </div>
         </section>

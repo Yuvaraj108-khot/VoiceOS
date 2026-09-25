@@ -28,7 +28,9 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_API_KEY: z.string().optional(),
   TWILIO_API_SECRET: z.string().optional(),
+  TWILIO_PHONE_NUMBER: z.string().optional(),
   TWILIO_WEBHOOK_BASE_URL: z.string().optional(),
+
 
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.string().default('llama3-70b-8192'),

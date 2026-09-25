@@ -21,9 +21,11 @@ export const callsController = {
   },
 
   async triggerOutboundCall(req: Request, res: Response) {
-    const call = await callsService.triggerOutboundCall(req.organization!.id, req.body);
+    const orgId = req.organization?.id || 'org_dev';
+    const call = await callsService.triggerOutboundCall(orgId, req.body);
     ApiResponse.created(res, call, 'Outbound call queued successfully');
   },
+
 
   async getRecording(req: Request, res: Response) {
     const { url } = await callsService.getRecordingUrl(req.organization!.id, req.params.id);

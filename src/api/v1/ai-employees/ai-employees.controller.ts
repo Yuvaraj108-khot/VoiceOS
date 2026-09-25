@@ -33,5 +33,15 @@ export const aiEmployeesController = {
   async delete(req: Request, res: Response) {
     await aiEmployeesService.delete(req.organization!.id, req.params.id);
     ApiResponse.noContent(res);
+  },
+  
+  async provisionPhoneNumber(req: Request, res: Response) {
+    const { twilioManager } = require('../../../telephony/TwilioManager');
+    const phoneNumber = await twilioManager.provisionPhoneNumber(
+      req.organization!.id,
+      req.params.id,
+      req.body.areaCode
+    );
+    ApiResponse.created(res, phoneNumber, 'Phone number provisioned successfully');
   }
 };

@@ -5,7 +5,7 @@ import compression from 'compression';
 import { v1Router } from './api/v1';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
-import { twilioWebhook } from './api/webhooks/twilio.webhook';
+import { twilioWebhook, twilioVoiceWebhook, twilioStatusWebhook, twilioRecordingWebhook } from './api/webhooks/twilio.webhook';
 import { stripeWebhook } from './api/webhooks/stripe.webhook';
 import { calendarWebhook } from './api/webhooks/calendar.webhook';
 import { webhookRateLimiter } from './middleware/rateLimiter';
@@ -24,7 +24,11 @@ app.get('/health', (req, res) => {
 });
 
 // Webhooks (Mount before express.json() because some require raw bodies)
-app.post('/webhooks/twilio', express.urlencoded({ extended: true }), twilioWebhook);
+app.post('/webhooks/twilio/voice',     express.urlencoded({ extended: true }), twilioVoiceWebhook);
+app.post('/webhooks/twilio/inbound',   express.urlencoded({ extended: true }), twilioVoiceWebhook);
+app.post('/webhooks/twilio/status',    express.urlencoded({ extended: true }), twilioStatusWebhook);
+app.post('/webhooks/twilio/recording', express.urlencoded({ extended: true }), twilioRecordingWebhook);
+app.post('/webhooks/twilio',           express.urlencoded({ extended: true }), twilioWebhook); // legacy
 app.post('/webhooks/stripe', webhookRateLimiter, express.raw({ type: 'application/json' }), stripeWebhook);
 app.post('/webhooks/calendar', express.json(), calendarWebhook);
 

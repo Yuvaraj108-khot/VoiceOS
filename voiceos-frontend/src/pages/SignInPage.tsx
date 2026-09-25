@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api';
 
 export default function SignInPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@voiceos.io');
+  const [password, setPassword] = useState('Admin@12345');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,10 +17,13 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      // Assuming the backend returns { token: "...", user: {...} }
       const response = await api.post('/auth/login', { email, password });
-      login(response.token, response.user);
-      navigate('/dashboard');
+      if (response && response.data) {
+        login(response.data.accessToken, response.data.user);
+        navigate('/dashboard');
+      } else {
+        throw new Error('Invalid response structure from server');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {

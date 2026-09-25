@@ -216,9 +216,9 @@ export default function DashboardPage() {
 <span className="font-label-sm text-label-sm text-on-surface-variant">Idle</span>
 </div>
 </div>
-<button className="button-hover w-full mt-lg py-sm border-2 border-dashed border-outline-variant rounded-lg text-outline font-label-md hover:border-primary hover:text-primary transition-all">
+<Link to="/create-employee" className="block text-center button-hover w-full mt-lg py-sm border-2 border-dashed border-outline-variant rounded-lg text-outline font-label-md hover:border-primary hover:text-primary transition-all">
                         + Add New Agent
-                    </button>
+                    </Link>
 </div>
 </div>
 </section>

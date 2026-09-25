@@ -36,7 +36,6 @@ export const callRouter = {
       if (!customer) {
         customer = await prisma.customer.create({
           data: {
-            id: generatePrefixedId('cus'),
             organizationId: phoneNumber.organizationId,
             firstName: 'Unknown',
             lastName: 'Caller',
@@ -48,7 +47,6 @@ export const callRouter = {
       // 3. Create call record
       const call = await prisma.call.create({
         data: {
-          id: generatePrefixedId('call'),
           organizationId: phoneNumber.organizationId,
           employeeId: phoneNumber.employeeId!,
           phoneNumberId: phoneNumber.id,

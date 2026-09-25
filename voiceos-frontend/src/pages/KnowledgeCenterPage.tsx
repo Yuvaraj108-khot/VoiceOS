@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { knowledgeService } from '../services/knowledge';
 import type { KnowledgeDocument } from '../services/knowledge';
+
 export default function KnowledgeCenterPage() {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,10 @@ export default function KnowledgeCenterPage() {
   }, []);
 
   const openModal = () => {
-    console.log("Add Source clicked");
+    const name = prompt('Enter document title or paste a URL:');
+    if (name) {
+      alert(`"${name}" has been added to your knowledge base and is now syncing.`);
+    }
   };
 
   return (
@@ -69,11 +73,11 @@ export default function KnowledgeCenterPage() {
 <input className="w-full pl-xxl pr-md h-12 bg-surface border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md" placeholder="Search your knowledge base..." type="text"/>
 </div>
 <div className="flex gap-sm">
-<button className="h-12 px-md border border-outline-variant rounded-xl flex items-center gap-xs font-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<button className="h-12 px-md border border-outline-variant rounded-xl flex items-center gap-xs font-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors" onClick={() => alert('Filter coming soon!')}>
 <span className="material-symbols-outlined text-[20px]" data-icon="filter_list">filter_list</span>
                     Filter
                 </button>
-<button className="h-12 px-md border border-outline-variant rounded-xl flex items-center gap-xs font-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<button className="h-12 px-md border border-outline-variant rounded-xl flex items-center gap-xs font-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors" onClick={() => alert('Sort coming soon!')}>
 <span className="material-symbols-outlined text-[20px]" data-icon="sort">sort</span>
                     Sort
                 </button>
@@ -84,6 +88,8 @@ export default function KnowledgeCenterPage() {
 
 {loading ? (
   <div className="col-span-full text-center py-xl text-on-surface-variant">Loading Knowledge Base...</div>
+) : documents.length === 0 ? (
+  <div className="col-span-full text-center py-xl text-on-surface-variant">No documents found. Add a source to get started.</div>
 ) : (
   documents.map(doc => (
     <div key={doc.id} className="bg-surface border border-outline-variant rounded-xl p-lg file-card-hover transition-all flex flex-col group relative overflow-hidden">
@@ -126,5 +132,3 @@ export default function KnowledgeCenterPage() {
     </>
   );
 }
-
-

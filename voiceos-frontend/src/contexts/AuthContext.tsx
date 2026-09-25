@@ -29,9 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       if (token) {
         try {
-          // This would be the real endpoint for fetching current user
-          const currentUser = await api.get('/auth/me');
-          setUser(currentUser);
+          const currentUserResponse = await api.get('/auth/me');
+          if (currentUserResponse && currentUserResponse.data) {
+            setUser(currentUserResponse.data.user);
+          } else {
+            logout();
+          }
         } catch (error) {
           console.error("Session expired or invalid token");
           logout();

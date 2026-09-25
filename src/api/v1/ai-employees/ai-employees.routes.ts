@@ -44,4 +44,10 @@ router.delete(
   asyncHandler(aiEmployeesController.delete)
 );
 
+router.post(
+  '/:id/phone-number',
+  requireAdmin,
+  asyncHandler(aiEmployeesController.provisionPhoneNumber)
+);
+
 export const aiEmployeesRoutes = router;

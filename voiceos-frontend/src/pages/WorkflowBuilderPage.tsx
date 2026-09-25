@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { workflowsService } from '../services/workflows';
 import type { Workflow } from '../services/workflows';
+
 export default function WorkflowBuilderPage() {
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [activeWorkflow, setActiveWorkflow] = useState<Workflow | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -10,6 +12,7 @@ export default function WorkflowBuilderPage() {
       try {
         const data = await workflowsService.list();
         if (data.length > 0) {
+          setWorkflows(data);
           setActiveWorkflow(data[0]);
         }
       } catch (error) {
@@ -26,12 +29,33 @@ export default function WorkflowBuilderPage() {
   }
 
   if (!activeWorkflow) {
-    return <div className="pt-xxxl text-center text-on-surface-variant">No workflows found.</div>;
+    return (
+      <div className="pt-xxxl text-center text-on-surface-variant flex flex-col items-center gap-lg">
+        <span className="material-symbols-outlined text-[64px] text-outline">account_tree</span>
+        <p className="font-headline-md">No workflows found.</p>
+        <button className="bg-primary text-on-primary px-xl py-md rounded-xl font-label-md" onClick={() => alert('Workflow creation coming soon!')}>Create First Workflow</button>
+      </div>
+    );
   }
 
   return (
     <>
 <div className="pt-xxxl px-md max-w-lg mx-auto">
+{/* Workflow Switcher */}
+{workflows.length > 1 && (
+  <div className="mb-lg flex gap-sm overflow-x-auto pb-xs">
+    {workflows.map(wf => (
+      <button
+        key={wf.id}
+        onClick={() => setActiveWorkflow(wf)}
+        className={`px-md py-xs rounded-full font-label-sm whitespace-nowrap transition-all ${activeWorkflow.id === wf.id ? 'bg-primary text-on-primary' : 'border border-outline-variant text-on-surface-variant hover:border-primary'}`}
+      >
+        {wf.name}
+        <span className={`ml-xs text-[10px] uppercase ${wf.status === 'active' ? 'text-green-400' : 'text-outline'}`}>• {wf.status}</span>
+      </button>
+    ))}
+  </div>
+)}
 {/* Workflow Info */}
 <section className="mb-xl bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm">
 <div className="flex justify-between items-start mb-sm">
@@ -39,7 +63,7 @@ export default function WorkflowBuilderPage() {
 <span className="font-label-sm text-label-sm text-primary uppercase tracking-widest">Active Workflow</span>
 <h2 className="font-headline-md text-headline-md-mobile text-on-surface">{activeWorkflow.name}</h2>
 </div>
-<span className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-xs rounded-lg transition-colors" data-icon="more_vert">more_vert</span>
+<button onClick={() => alert('Workflow settings coming soon!')} className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-xs rounded-lg transition-colors">more_vert</button>
 </div>
 <p className="font-body-sm text-body-sm text-on-surface-variant">{activeWorkflow.description}</p>
 </section>
@@ -102,7 +126,6 @@ export default function WorkflowBuilderPage() {
     {node.config?.integrationType && (
       <div className="mt-md flex items-center gap-sm">
       <div className="w-5 h-5 bg-blue-100 rounded flex items-center justify-center overflow-hidden">
-      {/* <img className="w-3 h-3" src="..." /> */}
       <span className="material-symbols-outlined text-[14px] text-blue-600">sync</span>
       </div>
       <span className="font-body-sm text-body-sm text-on-surface-variant">Syncs with {node.config.integrationType}</span>
@@ -114,7 +137,7 @@ export default function WorkflowBuilderPage() {
 })}
 
 {/* Add New Node Button */}
-<button className="relative node-connector mt-sm w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg transition-transform active:scale-90 z-10">
+<button className="relative node-connector mt-sm w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg transition-transform active:scale-90 z-10" onClick={() => alert('New node added! (Connect backend to persist)')}>
 <span className="material-symbols-outlined" data-icon="add">add</span>
 </button>
 </div>
@@ -122,5 +145,3 @@ export default function WorkflowBuilderPage() {
     </>
   );
 }
-
-

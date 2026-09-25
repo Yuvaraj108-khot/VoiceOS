@@ -142,10 +142,15 @@ export const optionalAuthenticate = asyncHandler(
       next();
       return;
     }
-    // Delegate to full authenticate
-    await authenticate(req, res, next);
+    try {
+      await authenticate(req, res, next);
+    } catch {
+      // Ignore token verification errors in optional auth
+      next();
+    }
   },
 );
+
 
 export const socketAuthenticate = async (socket: any, next: (err?: any) => void) => {
   try {

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = 'http://localhost:4000/v1';
 
 const getHeaders = () => {
   const token = localStorage.getItem('auth_token');
@@ -13,8 +13,9 @@ export const api = {
     const res = await fetch(`${API_URL}${endpoint}`, {
       headers: getHeaders()
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+    return data;
   },
   
   post: async (endpoint: string, body: any) => {
@@ -23,8 +24,9 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+    return data;
   },
   
   delete: async (endpoint: string) => {
@@ -32,8 +34,9 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders()
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+    return data;
   },
   
   put: async (endpoint: string, body?: any) => {
@@ -42,7 +45,9 @@ export const api = {
       headers: getHeaders(),
       body: body ? JSON.stringify(body) : undefined
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+    return data;
   }
 };
+

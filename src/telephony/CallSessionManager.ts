@@ -12,22 +12,42 @@ export interface CallSession {
 }
 
 export class CallSessionManager {
+  private localSessions = new Map<string, CallSession>();
+
   /**
-   * Retrieves an active session from memory (Redis).
+   * Retrieves an active session from memory (Redis or local Map).
    */
   async getSession(callId: string): Promise<CallSession | null> {
-    if (redis.status !== "ready") return null;
-    const data = await redis.get(`call_session:${callId}`);
-    return data ? JSON.parse(data) : null;
+    if (this.localSessions.has(callId)) {
+      return this.localSessions.get(callId)!;
+    }
+
+    if (redis.status === "ready") {
+      try {
+        const data = await redis.get(`call_session:${callId}`);
+        if (data) {
+          const session = JSON.parse(data);
+          this.localSessions.set(callId, session);
+          return session;
+        }
+      } catch { /* ignore */ }
+    }
+
+    return null;
   }
 
   /**
-   * Stores an active session in memory (Redis).
+   * Stores an active session in memory (Redis and local Map).
    */
   async saveSession(session: CallSession): Promise<void> {
-    if (redis.status !== "ready") return;
-    // Set expiry to 2 hours to prevent stale sessions
-    await redis.setex(`call_session:${session.callId}`, 7200, JSON.stringify(session));
+    this.localSessions.set(session.callId, session);
+
+    if (redis.status === "ready") {
+      try {
+        // Set expiry to 2 hours
+        await redis.setex(`call_session:${session.callId}`, 7200, JSON.stringify(session));
+      } catch { /* ignore */ }
+    }
   }
 
   /**
@@ -35,18 +55,23 @@ export class CallSessionManager {
    */
   async endSession(callId: string, finalStatus: 'COMPLETED' | 'FAILED', durationSeconds: number): Promise<void> {
     try {
-      const session = await this.getSession(callId);
-      if (session) {
-        if (redis.status === "ready") {
+      this.localSessions.delete(callId);
+
+      if (redis.status === "ready") {
+        try {
           await redis.del(`call_session:${callId}`);
-        }
+        } catch { /* ignore */ }
       }
 
+      const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
       await prisma.call.updateMany({
-        where: { OR: [{ id: callId }, { twilioCallSid: callId }] },
+        where: isUuid(callId)
+          ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
+          : { twilioCallSid: callId },
         data: {
           status: finalStatus,
           duration: durationSeconds,
+          endedAt: new Date(),
         }
       });
       

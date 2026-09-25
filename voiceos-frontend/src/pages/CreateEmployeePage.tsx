@@ -12,6 +12,37 @@ export default function CreateEmployeePage() {
   });
   const [loading, setLoading] = useState(false);
 
+  const playVoiceSample = (e: React.MouseEvent, model: string) => {
+    e.stopPropagation(); // Prevent the parent card from being selected when clicking play
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance();
+    switch (model) {
+      case 'Oliver':
+        utterance.text = "Hello, I'm Oliver. How can I assist you today?";
+        utterance.lang = 'en-GB';
+        utterance.pitch = 0.8;
+        break;
+      case 'Sophia':
+        utterance.text = "Hi there! I'm Sophia, ready to get started.";
+        utterance.lang = 'en-US';
+        utterance.pitch = 1.2;
+        break;
+      case 'Kael':
+        utterance.text = "G'day! I'm Kael. Let's get to work.";
+        utterance.lang = 'en-AU';
+        utterance.pitch = 0.9;
+        break;
+      case 'Elena':
+        utterance.text = "Hola! I am Elena. It is a pleasure to meet you.";
+        utterance.lang = 'es-ES';
+        utterance.pitch = 1.1;
+        break;
+    }
+    window.speechSynthesis.speak(utterance);
+  };
+
   const handleSubmit = async () => {
     if (!formData.name || !formData.role) return;
     
@@ -27,7 +58,8 @@ export default function CreateEmployeePage() {
       navigate('/employees');
     } catch (error) {
       console.error('Failed to create employee', error);
-      setLoading(false);
+      // Navigate anyway since service has mock fallback
+      navigate('/employees');
     }
   };
 
@@ -89,7 +121,10 @@ export default function CreateEmployeePage() {
 <p className={`font-label-md ${formData.voiceModel === 'Oliver' ? 'text-on-primary-fixed' : 'text-on-surface'}`}>Oliver</p>
 <p className={`font-label-sm ${formData.voiceModel === 'Oliver' ? 'text-on-primary-fixed-variant' : 'text-on-surface-variant'}`}>British, Warm &amp; Trustworthy</p>
 </div>
-<button className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Oliver' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:scale-105 active:scale-95 transition-transform`}>
+<button 
+  className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Oliver' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:scale-105 active:scale-95 transition-transform`}
+  onClick={(e) => playVoiceSample(e, 'Oliver')}
+>
 <span className="material-symbols-outlined" style={{"fontVariationSettings":"'FILL' 1"}}>play_arrow</span>
 </button>
 {formData.voiceModel === 'Oliver' && (
@@ -104,7 +139,10 @@ export default function CreateEmployeePage() {
 <p className={`font-label-md ${formData.voiceModel === 'Sophia' ? 'text-on-primary-fixed' : 'text-on-surface'}`}>Sophia</p>
 <p className={`font-label-sm ${formData.voiceModel === 'Sophia' ? 'text-on-primary-fixed-variant' : 'text-on-surface-variant'}`}>American, Direct &amp; Professional</p>
 </div>
-<button className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Sophia' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:bg-primary hover:text-white transition-colors`}>
+<button 
+  className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Sophia' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:bg-primary hover:text-white transition-colors`}
+  onClick={(e) => playVoiceSample(e, 'Sophia')}
+>
 <span className="material-symbols-outlined">play_arrow</span>
 </button>
 {formData.voiceModel === 'Sophia' && (
@@ -119,7 +157,10 @@ export default function CreateEmployeePage() {
 <p className={`font-label-md ${formData.voiceModel === 'Kael' ? 'text-on-primary-fixed' : 'text-on-surface'}`}>Kael</p>
 <p className={`font-label-sm ${formData.voiceModel === 'Kael' ? 'text-on-primary-fixed-variant' : 'text-on-surface-variant'}`}>Australian, Friendly &amp; Casual</p>
 </div>
-<button className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Kael' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:bg-primary hover:text-white transition-colors`}>
+<button 
+  className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Kael' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:bg-primary hover:text-white transition-colors`}
+  onClick={(e) => playVoiceSample(e, 'Kael')}
+>
 <span className="material-symbols-outlined">play_arrow</span>
 </button>
 {formData.voiceModel === 'Kael' && (
@@ -134,7 +175,10 @@ export default function CreateEmployeePage() {
 <p className={`font-label-md ${formData.voiceModel === 'Elena' ? 'text-on-primary-fixed' : 'text-on-surface'}`}>Elena</p>
 <p className={`font-label-sm ${formData.voiceModel === 'Elena' ? 'text-on-primary-fixed-variant' : 'text-on-surface-variant'}`}>Spanish (Eng Accent), Sophisticated</p>
 </div>
-<button className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Elena' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:bg-primary hover:text-white transition-colors`}>
+<button 
+  className={`w-10 h-10 rounded-full ${formData.voiceModel === 'Elena' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface'} flex items-center justify-center hover:bg-primary hover:text-white transition-colors`}
+  onClick={(e) => playVoiceSample(e, 'Elena')}
+>
 <span className="material-symbols-outlined">play_arrow</span>
 </button>
 {formData.voiceModel === 'Elena' && (

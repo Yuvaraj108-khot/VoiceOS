@@ -18,13 +18,14 @@ export class SocketServer {
     });
 
     if (redis.status === "ready") {
-      // Create a second redis client for subscriptions as required by socket.io-redis
-      const pubClient = redis;
-      const subClient = pubClient.duplicate();
-      await subClient.connect();
-      
-      this.io.adapter(createAdapter(pubClient, subClient));
-      logger.info('Socket.io Redis adapter configured');
+      try {
+        const pubClient = redis;
+        const subClient = pubClient.duplicate();
+        this.io.adapter(createAdapter(pubClient, subClient));
+        logger.info('Socket.io Redis adapter configured');
+      } catch (err: any) {
+        logger.warn(`Failed to configure Socket.io Redis adapter: ${err.message}. Falling back to in-memory adapter.`);
+      }
     }
 
     // Middleware for JWT authentication

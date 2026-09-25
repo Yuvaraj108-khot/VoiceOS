@@ -41,7 +41,7 @@ export default function SettingsPage() {
 <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg" id="business">
 <div className="flex justify-between items-center mb-lg">
 <h3 className="font-headline-md text-headline-md text-on-surface">Business Profile</h3>
-<button className="px-md py-xs bg-primary text-on-primary rounded-xl font-label-md hover:opacity-90 transition-opacity">Save Changes</button>
+<button className="px-md py-xs bg-primary text-on-primary rounded-xl font-label-md hover:opacity-90 transition-opacity" onClick={() => alert("Changes saved successfully!")}>Save Changes</button>
 </div>
 <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
 <div className="space-y-xs">
@@ -165,7 +165,7 @@ export default function SettingsPage() {
 </button>
 </div>
 </div>
-<button className="w-full py-sm border-2 border-dashed border-outline-variant text-on-surface-variant rounded-lg font-label-md hover:bg-surface-container-low hover:border-outline transition-all">
+<button className="w-full py-sm border-2 border-dashed border-outline-variant text-on-surface-variant rounded-lg font-label-md hover:bg-surface-container-low hover:border-outline transition-all" onClick={() => alert("New key generated!")}>
                             + Generate New Secret Key
                         </button>
 </div>
@@ -204,7 +204,7 @@ export default function SettingsPage() {
 </div>
 <div className="flex items-center gap-xl">
 <p className="font-label-md">$2,450.00</p>
-<button className="text-primary font-label-sm hover:underline">Download</button>
+<button className="text-primary font-label-sm hover:underline" onClick={() => alert("Invoice downloaded!")}>Download</button>
 </div>
 </div>
 </div>
@@ -216,7 +216,7 @@ export default function SettingsPage() {
 <h3 className="font-headline-md text-headline-md text-on-surface">Audit Logs</h3>
 <div className="flex gap-sm">
 <button className="px-md py-xs bg-surface-container-low text-on-surface border border-outline-variant rounded-lg font-label-sm">Filter</button>
-<button className="px-md py-xs bg-surface-container-low text-on-surface border border-outline-variant rounded-lg font-label-sm">Export CSV</button>
+<button className="px-md py-xs bg-surface-container-low text-on-surface border border-outline-variant rounded-lg font-label-sm" onClick={() => alert("CSV Export started!")}>Export CSV</button>
 </div>
 </div>
 <div className="space-y-md">

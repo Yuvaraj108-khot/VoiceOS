@@ -4,6 +4,7 @@ import type { AnalyticsOverview } from '../services/analytics';
 export default function AnalyticsPage() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<'Today' | '7D' | '30D'>('Today');
 
   useEffect(() => {
     const fetchOverview = async () => {
@@ -31,19 +32,19 @@ export default function AnalyticsPage() {
 <div className="flex flex-wrap items-center gap-sm">
 {/* Date Picker Filter */}
 <div className="flex items-center bg-white border border-outline-variant rounded-xl p-unit shadow-sm overflow-hidden">
-<button className="px-md py-xs font-label-md text-label-md bg-secondary-container text-on-secondary-container rounded-full transition-all">Today</button>
-<button className="px-md py-xs font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-all">7D</button>
-<button className="px-md py-xs font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-all">30D</button>
+{(['Today', '7D', '30D'] as const).map(f => (
+  <button key={f} onClick={() => setActiveFilter(f)} className={`px-md py-xs font-label-md text-label-md rounded-full transition-all ${activeFilter === f ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>{f}</button>
+))}
 </div>
 {/* Employee Filter */}
 <div className="relative group">
-<button className="flex items-center gap-sm px-md h-10 bg-white border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface-variant hover:border-primary transition-colors">
+<button className="flex items-center gap-sm px-md h-10 bg-white border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface-variant hover:border-primary transition-colors" onClick={() => alert('Employee filter coming soon!')}>
 <span className="material-symbols-outlined text-[20px]" data-icon="group">group</span>
 <span>All Employees</span>
 <span className="material-symbols-outlined text-[18px]" data-icon="expand_more">expand_more</span>
 </button>
 </div>
-<button className="flex items-center justify-center w-10 h-10 bg-primary text-white rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm">
+<button className="flex items-center justify-center w-10 h-10 bg-primary text-white rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm" onClick={() => alert('Analytics report exported!')}>
 <span className="material-symbols-outlined" data-icon="file_download">file_download</span>
 </button>
 </div>
@@ -259,7 +260,7 @@ export default function AnalyticsPage() {
 <span className="font-label-sm text-label-sm px-sm py-xs bg-white/20 rounded inline-block">AI SUGGESTION</span>
 <h3 className="font-headline-md text-headline-md font-semibold">Scaling Required</h3>
 <p className="font-body-md text-body-md text-primary-fixed/80">Based on peak hour trends (12 PM - 4 PM), we recommend activating 3 additional AI instances to maintain response latency below 150ms.</p>
-<button className="flex items-center gap-sm px-lg h-12 bg-white text-primary rounded-xl font-label-md text-label-md font-bold hover:bg-primary-fixed transition-colors">
+<button className="flex items-center gap-sm px-lg h-12 bg-white text-primary rounded-xl font-label-md text-label-md font-bold hover:bg-primary-fixed transition-colors" onClick={() => alert('Auto-scaling initiated! 3 additional instances are being spun up.')}>
                         Deploy Auto-Scaling
                         <span className="material-symbols-outlined text-[18px]" data-icon="auto_mode">auto_mode</span>
 </button>

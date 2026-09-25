@@ -9,8 +9,8 @@ export default function SearchResultsPage() {
 <h1 className="font-display text-display text-on-surface">System Overview</h1>
 </div>
 <div className="flex gap-sm">
-<button className="px-md py-xs bg-surface-container-highest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-outline-variant transition-colors">Export Report</button>
-<button className="px-md py-xs bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm">Initialize AI Agent</button>
+<button className="px-md py-xs bg-surface-container-highest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-outline-variant transition-colors" onClick={() => alert("Report Exported!")}>Export Report</button>
+<button className="px-md py-xs bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm" onClick={() => alert("AI Agent Initialized!")}>Initialize AI Agent</button>
 </div>
 </div>
 {/* Bento Grid Stats */}

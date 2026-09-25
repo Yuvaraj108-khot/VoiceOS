@@ -2,9 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { aiEmployeesService } from '../services/aiEmployees';
 import type { AIEmployee } from '../services/aiEmployees';
+import { PhoneDialerModal } from '../components/PhoneDialerModal';
+
 export default function AIEmployeesPage() {
   const [employees, setEmployees] = useState<AIEmployee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialerOpen, setIsDialerOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -20,6 +24,11 @@ export default function AIEmployeesPage() {
     fetchEmployees();
   }, []);
 
+  const handleOpenDialerForEmployee = (empId: string) => {
+    setSelectedEmployeeId(empId);
+    setIsDialerOpen(true);
+  };
+
   return (
     <>
 <div className="pt-xxxl pb-xxxl px-md md:px-xxl max-w-[1440px] mx-auto mt-xxl">
@@ -29,10 +38,19 @@ export default function AIEmployeesPage() {
 <h1 className="font-headline-lg text-headline-lg text-on-surface mb-xs">AI Workforce</h1>
 <p className="font-body-md text-body-md text-on-surface-variant">Manage and scale your autonomous voice workforce with precision.</p>
 </div>
+<div className="flex gap-sm">
+<button 
+  onClick={() => { setSelectedEmployeeId(''); setIsDialerOpen(true); }}
+  className="flex items-center gap-sm bg-surface border border-outline-variant text-on-surface px-lg py-md rounded-xl hover:bg-surface-container interactive-element btn-active-state shadow-xs"
+>
+  <span className="material-symbols-outlined text-[20px]">call</span>
+  <span className="font-label-md text-label-md font-bold">Make Call</span>
+</button>
 <Link to="/create-employee" className="flex items-center gap-sm bg-primary text-on-primary px-lg py-md rounded-xl hover:bg-primary-container interactive-element btn-active-state shadow-sm">
 <span className="material-symbols-outlined">add</span>
-<span className="font-label-md text-label-md">Add Employee</span>
+<span className="font-label-md text-label-md font-bold">Add Employee</span>
 </Link>
+</div>
 </section>
 {/* Search & Filter Bar */}
 <div className="flex flex-wrap gap-md mb-xl bg-white p-md rounded-xl border border-outline-variant animate-entrance delay-1">
@@ -88,12 +106,18 @@ export default function AIEmployeesPage() {
     <span className="font-headline-md text-headline-md text-primary font-bold">{employee.callsHandled}</span>
     </div>
     </div>
-    <div className="card-actions px-lg py-md bg-surface-container border-t border-outline-variant flex justify-between items-center opacity-0 transition-opacity duration-200">
-    <button className="flex items-center gap-xs font-label-sm text-label-sm text-on-surface-variant hover:text-primary interactive-element btn-active-state">
-    <span className="material-symbols-outlined text-[18px]">edit</span> Edit
-                        </button>
-    <div className="flex gap-md">
-    <button className="material-symbols-outlined text-error hover:text-red-700 p-xs rounded-lg interactive-element btn-active-state" title="Delete" onClick={() => aiEmployeesService.delete(employee.id)}>delete</button>
+    <div className="card-actions px-lg py-md bg-surface-container border-t border-outline-variant flex justify-between items-center opacity-100 group-hover:opacity-100 transition-opacity duration-200">
+    <button 
+      onClick={() => handleOpenDialerForEmployee(employee.id)}
+      className="flex items-center gap-xs px-md py-xs bg-primary text-on-primary rounded-lg font-label-sm text-label-sm font-bold hover:brightness-110 interactive-element btn-active-state shadow-xs"
+    >
+      <span className="material-symbols-outlined text-[16px]">call</span> Place Call
+    </button>
+    <div className="flex gap-xs items-center">
+      <button className="flex items-center gap-xs p-xs font-label-sm text-label-sm text-on-surface-variant hover:text-primary interactive-element btn-active-state">
+        <span className="material-symbols-outlined text-[18px]">edit</span>
+      </button>
+      <button className="material-symbols-outlined text-error hover:text-red-700 p-xs rounded-lg interactive-element btn-active-state" title="Delete" onClick={() => aiEmployeesService.delete(employee.id)}>delete</button>
     </div>
     </div>
     </article>
@@ -109,9 +133,13 @@ export default function AIEmployeesPage() {
 <p className="font-body-sm text-body-sm text-outline mt-xs">Select from templates or build custom</p>
 </Link>
 </div>
+
+<PhoneDialerModal 
+  isOpen={isDialerOpen} 
+  onClose={() => setIsDialerOpen(false)} 
+  preselectedEmployeeId={selectedEmployeeId} 
+/>
 </div>
     </>
   );
 }
-
-
