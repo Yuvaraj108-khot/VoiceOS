@@ -85,6 +85,12 @@ export class PromptBuilder {
       prompt += `You are speaking with: ${variables.customerName}\n`;
     }
 
+    if (variables.language === 'hi') {
+      prompt += `LANGUAGE PREFERENCE: The caller explicitly selected HINDI (हिंदी). You MUST respond in Hindi (or natural conversational Hinglish using Roman script or Devanagari).\n`;
+    } else if (variables.language === 'en') {
+      prompt += `LANGUAGE PREFERENCE: The caller explicitly selected ENGLISH. Respond in fluent, natural English.\n`;
+    }
+
     // Query active structured spreadsheets for this organization so the LLM understands available business fields
     let hasOrderData = false;
     let primaryEntityLabel = 'reference ID';

@@ -5,6 +5,7 @@ export interface AnalyticsOverview {
   totalCalls: number;
   avgDuration: string;
   successRate: number;
+  avgSatisfaction?: number;
   costSaved: number;
 }
 

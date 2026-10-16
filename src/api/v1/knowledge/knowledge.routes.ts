@@ -30,6 +30,12 @@ router.patch(
   asyncHandler(knowledgeController.update)
 );
 
+router.post(
+  '/:id/sync',
+  auditLogger({ action: 'UPDATE', resource: 'KnowledgeDocument' }),
+  asyncHandler(knowledgeController.sync)
+);
+
 router.delete(
   '/:id',
   auditLogger({ action: 'DELETE', resource: 'KnowledgeDocument' }),

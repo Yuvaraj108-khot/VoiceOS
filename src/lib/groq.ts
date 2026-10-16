@@ -7,7 +7,7 @@ export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export const GROQ_MODEL = process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b';
+export const GROQ_MODEL = process.env.GROQ_MODEL ?? 'qwen/qwen3.8-27b';
 export const GROQ_MAX_TOKENS = parseInt(process.env.GROQ_MAX_TOKENS ?? '150', 10);
 export const GROQ_TEMPERATURE = parseFloat(process.env.GROQ_TEMPERATURE ?? '0.4');
 

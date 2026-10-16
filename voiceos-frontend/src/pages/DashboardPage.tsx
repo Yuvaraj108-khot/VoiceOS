@@ -74,15 +74,15 @@ export default function DashboardPage() {
 <div className="mt-xl">
 <p className="font-label-sm text-label-sm text-on-surface-variant uppercase">Avg. Satisfaction</p>
 <div className="flex items-baseline gap-xs">
-<h3 className="font-display text-display leading-tight">{loading ? '...' : ((overview?.successRate || 0) * 5).toFixed(1)}</h3>
+<h3 className="font-display text-display leading-tight">{loading ? '...' : (overview?.avgSatisfaction ?? (((overview?.successRate ?? 98) / 100) * 5)).toFixed(1)}</h3>
 <span className="text-body-lg text-outline">/ 5.0</span>
 </div>
 </div>
 <div className="mt-md flex items-center gap-sm">
 <div className="flex-1 bg-surface-container-highest h-2 rounded-full relative overflow-hidden">
-<div className="absolute left-0 top-0 h-full bg-on-secondary-fixed-variant rounded-full w-[98%] animate-draw-right"></div>
+<div className="absolute left-0 top-0 h-full bg-on-secondary-fixed-variant rounded-full animate-draw-right" style={{ width: `${Math.min(100, Math.max(0, overview?.successRate ?? 98))}%` }}></div>
 </div>
-<span className="font-label-sm text-on-surface-variant">98%</span>
+<span className="font-label-sm text-on-surface-variant">{loading ? '...' : `${overview?.successRate ?? 98}%`}</span>
 </div>
 </div>
 {/* Appointments Booked */}

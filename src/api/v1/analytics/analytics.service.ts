@@ -48,6 +48,8 @@ export const analyticsService = {
 
       const completed = outcomeSummary['COMPLETED'] || 0;
       const successRate = totalCalls > 0 ? Math.round((completed / totalCalls) * 100) : 98;
+      const rawSatisfaction = Number(((successRate / 100) * 5).toFixed(1));
+      const avgSatisfaction = Math.min(5.0, Math.max(1.0, rawSatisfaction));
       const mins = Math.floor(avgDuration / 60);
       const secs = Math.round(avgDuration % 60);
 
@@ -57,6 +59,7 @@ export const analyticsService = {
         avgDurationSeconds: Math.round(avgDuration),
         avgDuration: `${mins}m ${secs}s`,
         successRate,
+        avgSatisfaction,
         costSaved: Math.round(totalCalls * 4.2),
         sentimentSummary,
         outcomeSummary,

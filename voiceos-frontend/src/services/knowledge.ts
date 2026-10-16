@@ -180,13 +180,13 @@ export const knowledgeService = {
         title: d.name || d.title || documentData.title,
         type: (d.type || documentData.type).toUpperCase(),
         category: determineCategory(d.type || documentData.type),
-        status: 'Active',
+        status: d.status === 'READY' ? 'Active' : d.status === 'PROCESSING' ? 'Syncing' : 'Active',
         lastUpdated: d.updatedAt || new Date().toISOString(),
         lastSynced: d.updatedAt || new Date().toISOString(),
         rowCount: d.rowCount || meta.rowCount || 0,
         columns: meta.columns || [],
         primaryKey: meta.primaryKey || documentData.primaryKey,
-        url: documentData.url,
+        url: d.sourceUrl || documentData.url,
         content: documentData.content
       };
       return newDoc;

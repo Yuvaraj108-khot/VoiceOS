@@ -37,6 +37,11 @@ export const knowledgeController = {
     ApiResponse.success(res, result);
   },
 
+  async sync(req: Request, res: Response) {
+    const doc = await knowledgeService.sync(req.organization!.id, req.params.id);
+    ApiResponse.success(res, doc, { message: 'Knowledge Document synced successfully' });
+  },
+
   async delete(req: Request, res: Response) {
     await knowledgeService.delete(req.organization!.id, req.params.id);
     ApiResponse.success(res, null, { message: 'Knowledge Document deleted' });

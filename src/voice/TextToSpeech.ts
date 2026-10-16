@@ -17,13 +17,10 @@ export class TextToSpeech {
   constructor() {
     // Pre-warm default greeting and transition phrases in memory so they are instantaneous (0ms)
     const commonPhrases = [
-      "Namaste and welcome! For English, press 1 or speak in English. हिंदी के लिए 2 दबाएं या हिंदी में बोलें।",
-      "Thank you. You have selected English. How can I assist you with your order or questions today?",
-      "धन्यवाद। आपने हिंदी चुनी है। बताइए, मैं आपकी क्या सहायता कर सकती हूँ?",
+      "Hello and welcome! Press 1 for English.",
+      "English selected. How can I help you today?",
       "Hi! How can I assist you today?",
       "Hello! How can I assist you today?",
-      "Hi! Thanks for reaching out. How can I assist you today?",
-      "Hi! Thanks for reaching out. I'm Yuvaraj, your AI Sales Development Representative. How can I help you today?",
       "Certainly,",
       "Sure,",
       "Yes,",
@@ -33,22 +30,45 @@ export class TextToSpeech {
       "Of course,",
       "Certainly, I can help with that.",
       "Sure, I can help with that.",
-      "Yes, absolutely.",
       "Haan bilkul,",
       "Theek hai,",
       "Ji zaroor,",
       "Let me check that for you right away.",
       "Sure, I can look that up for you. What is your reference ID?",
-      "I can check that for you. What is your reference ID?",
       "You're very welcome! Have a wonderful day!"
     ];
 
     setTimeout(async () => {
+      await this.generateBilingualGreetingAudio().catch(() => null);
       for (const phrase of commonPhrases) {
         await this.generateMulawAudio(phrase, EDGE_TTS_VOICE).catch(() => null);
       }
-      logger.info(`[TTS-CACHE] Pre-warmed ${commonPhrases.length} core phrases in memory (0ms latency ready)`);
+      await this.generateMulawAudio("हिंदी चुनी गई। बताइए, मैं आपकी क्या सहायता करूँ?", 'hi-IN-SwaraNeural').catch(() => null);
+      await this.generateMulawAudio("हिंदी के लिए दो दबाएं।", 'hi-IN-SwaraNeural').catch(() => null);
+      logger.info(`[TTS-CACHE] Pre-warmed bilingual greeting and ${commonPhrases.length + 2} core phrases in memory (0ms ready)`);
     }, 500);
+  }
+
+  /**
+   * Generates a natural, human-sounding bilingual greeting:
+   * English spoken by Neerja (expressive Indian English) + Hindi spoken natively by Swara.
+   */
+  async generateBilingualGreetingAudio(): Promise<Buffer> {
+    const cacheKey = 'bilingual_greeting_v2';
+    if (this.audioCache.has(cacheKey)) {
+      return this.audioCache.get(cacheKey)!;
+    }
+
+    try {
+      const p1 = await this.generateMulawAudio("Hello and welcome! Press 1 for English.", 'en-IN-NeerjaExpressiveNeural');
+      const p2 = await this.generateMulawAudio("हिंदी के लिए दो दबाएं।", 'hi-IN-SwaraNeural');
+      const silence = Buffer.alloc(1200, 0xff); // 150ms natural pause
+      const combined = Buffer.concat([p1, silence, p2]);
+      this.audioCache.set(cacheKey, combined);
+      return combined;
+    } catch {
+      return this.generateMulawAudio("Hello and welcome! Press 1 for English, or 2 for Hindi.", EDGE_TTS_VOICE);
+    }
   }
 
   private async getClient(voice: string): Promise<MsEdgeTTS> {

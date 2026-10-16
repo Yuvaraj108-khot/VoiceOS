@@ -36,12 +36,9 @@ export class MediaStreamHandler {
       this.sendMark.bind(this)
     );
 
-    // Wire speech complete, barge-in, and keypad DTMF callbacks
+    // Wire speech complete and barge-in callbacks
     this.audioStreamer.onSpeechComplete = this.handleSpeechComplete.bind(this);
     this.audioStreamer.onBargeIn = this.handleBargeIn.bind(this);
-    this.audioStreamer.onDtmfTone = () => {
-      logger.info('[VAD] Audio DTMF tone detected');
-    };
 
     this.ws.on('message', this.handleMessage.bind(this));
     this.ws.on('close', this.handleClose.bind(this));
@@ -112,7 +109,7 @@ export class MediaStreamHandler {
   // In-memory cache for ultra-fast employee resolution (seeded with user's actual configured AI Employee)
   private static cachedEmployeeProfile: { id: string; greeting: string; voiceId: string } | null = {
     id: '7a007f62-0dad-4368-9f1b-d6ff7181429d',
-    greeting: "Namaste and welcome! For English, press 1 or speak in English. हिंदी के लिए 2 दबाएं या हिंदी में बोलें।",
+    greeting: "Hello and welcome! Press 1 for English. हिंदी के लिए दो दबाएं।",
     voiceId: 'en-IN-NeerjaExpressiveNeural'
   };
   private static lastProfileCacheTime = Date.now();
@@ -132,7 +129,7 @@ export class MediaStreamHandler {
 
     // 1. Resolve greeting instantaneously using user's actual configured firstMessage
     const greetingText = MediaStreamHandler.cachedEmployeeProfile?.greeting || 
-      "Namaste and welcome! For English, press 1 or speak in English. हिंदी के लिए 2 दबाएं या हिंदी में बोलें।";
+      "Hello and welcome! Press 1 for English. हिंदी के लिए दो दबाएं।";
     if (MediaStreamHandler.cachedEmployeeProfile?.voiceId) {
       this.voiceId = MediaStreamHandler.cachedEmployeeProfile.voiceId;
     }
@@ -195,23 +192,29 @@ export class MediaStreamHandler {
   private async playGreeting(greetingText: string) {
     this.state = 'GREETING';
     this.audioStreamer.setListening(false);
-    this.audioStreamer.setBargeInEnabled(false);
+    this.audioStreamer.setBargeInEnabled(true);
     logger.info(`[VOICE] Greeting started: "${greetingText}"`);
 
     try {
-      const mulawAudio = await textToSpeech.generateMulawAudio(greetingText, this.voiceId);
+      const isBilingual = greetingText.includes('English') && (greetingText.includes('हिंदी') || greetingText.includes('Hindi'));
+      const mulawAudio = isBilingual 
+        ? await textToSpeech.generateBilingualGreetingAudio()
+        : await textToSpeech.generateMulawAudio(greetingText, this.voiceId);
 
       // Stream greeting audio to Twilio
-      await this.audioStreamer.playMulaw(mulawAudio, 'greeting_complete');
+      const completed = await this.audioStreamer.playMulaw(mulawAudio, 'greeting_complete');
+      if (!completed) {
+        logger.info('[VOICE] Greeting interrupted or cancelled by caller action');
+        return;
+      }
 
-      const approxDurationMs = Math.max(10000, (mulawAudio.length / 8000) * 1000 + 15000);
       this.clearSafetyTimer();
       this.markSafetyTimer = setTimeout(() => {
         if (this.state === 'GREETING') {
           logger.info('[VOICE] Greeting completed (fallback timer fired)');
           this.transitionToListening();
         }
-      }, approxDurationMs);
+      }, 1000);
 
     } catch (err: any) {
       logger.error(`[VOICE] Failed to play greeting: ${err.message}`);
@@ -239,6 +242,8 @@ export class MediaStreamHandler {
     this.audioStreamer.setListening(true);
   }
 
+  private lastLanguageSelectionTime: number = 0;
+
   /**
    * Handles keypad DTMF digits pressed by the caller
    */
@@ -249,27 +254,35 @@ export class MediaStreamHandler {
     if (!this.languageSelected && (this.state === 'GREETING' || this.state === 'LISTENING')) {
       if (digit === '1') {
         this.languageSelected = true;
+        this.lastLanguageSelectionTime = Date.now();
         this.voiceId = 'en-IN-NeerjaExpressiveNeural';
         if (this.callSid) {
           callSessionManager.updateVariables(this.callSid, { language: 'en' }).catch(() => {});
         }
         this.playConfirmation(
-          "Thank you. You have selected English. How can I assist you with your order or questions today?",
+          "English selected. How can I help you today?",
           'en-IN-NeerjaExpressiveNeural'
         );
         return;
       } else if (digit === '2') {
         this.languageSelected = true;
+        this.lastLanguageSelectionTime = Date.now();
         this.voiceId = 'hi-IN-SwaraNeural';
         if (this.callSid) {
           callSessionManager.updateVariables(this.callSid, { language: 'hi' }).catch(() => {});
         }
         this.playConfirmation(
-          "धन्यवाद। आपने हिंदी चुनी है। बताइए, मैं आपकी क्या सहायता कर सकती हूँ?",
+          "हिंदी चुनी गई। बताइए, मैं आपकी क्या सहायता करूँ?",
           'hi-IN-SwaraNeural'
         );
         return;
       }
+    }
+
+    // Ignore duplicate 1 or 2 presses if pressed immediately within 3s of selecting language
+    if (this.languageSelected && (Date.now() - this.lastLanguageSelectionTime < 3000) && (digit === '1' || digit === '2')) {
+      logger.info(`[KEYPAD] Ignoring duplicate language keypress '${digit}'`);
+      return;
     }
 
     // Buffer digits for order number / reference ID keypad entry
@@ -310,8 +323,12 @@ export class MediaStreamHandler {
       return;
     }
 
-    // Forward keypad numbers directly as order inquiry to conversation engine
-    this.executeTurn(`Order ${buffer}`);
+    // Only forward as order inquiry if it looks like an order number (2 or more digits, e.g. 101, 102)
+    if (buffer.length >= 2) {
+      this.executeTurn(`Order ${buffer}`);
+    } else {
+      logger.info(`[KEYPAD] Ignoring isolated single digit '${buffer}'`);
+    }
   }
 
   /**
@@ -331,14 +348,16 @@ export class MediaStreamHandler {
 
     try {
       const mulaw = await textToSpeech.generateMulawAudio(text, voiceId);
-      await this.audioStreamer.playMulaw(mulaw, 'ai_response_complete');
-      const audioDurationMs = Math.max(3000, (mulaw.length / 8000) * 1000 + 3000);
+      const completed = await this.audioStreamer.playMulaw(mulaw, 'ai_response_complete');
+      if (!completed) {
+        return;
+      }
       this.clearSafetyTimer();
       this.markSafetyTimer = setTimeout(() => {
         if (this.state === 'SPEAKING') {
           this.transitionToListening();
         }
-      }, audioDurationMs);
+      }, 800);
     } catch (err: any) {
       logger.error(`[VOICE] Failed to play IVR confirmation: ${err.message}`);
       this.transitionToListening();
@@ -382,9 +401,10 @@ export class MediaStreamHandler {
 
       // Check if caller spoke their language preference (e.g. "English", "1", "Hindi", "2")
       const cleanTranscript = transcript.trim().toLowerCase().replace(/[.,!]/g, '');
-      if (!this.languageSelected && (
-        cleanTranscript === '1' || cleanTranscript === 'one' || cleanTranscript === 'english' || cleanTranscript === 'for english' || cleanTranscript === 'press 1'
-      )) {
+      const isEnglishSpoken = cleanTranscript.includes('english') || cleanTranscript === '1' || cleanTranscript === 'one' || cleanTranscript.includes('press 1');
+      const isHindiSpoken = cleanTranscript.includes('hindi') || cleanTranscript === '2' || cleanTranscript === 'two' || cleanTranscript.includes('press 2') || cleanTranscript.includes('हिंदी') || cleanTranscript.includes('दो');
+
+      if (!this.languageSelected && isEnglishSpoken) {
         this.languageSelected = true;
         this.voiceId = 'en-IN-NeerjaExpressiveNeural';
         if (this.callSid) {
@@ -392,15 +412,13 @@ export class MediaStreamHandler {
         }
         this.stopThinkingSound();
         this.playConfirmation(
-          "Thank you. You have selected English. How can I assist you with your order or questions today?",
+          "English selected. How can I help you today?",
           'en-IN-NeerjaExpressiveNeural'
         );
         return;
       }
 
-      if (!this.languageSelected && (
-        cleanTranscript === '2' || cleanTranscript === 'two' || cleanTranscript === 'hindi' || cleanTranscript === 'for hindi' || cleanTranscript === 'press 2' || cleanTranscript.includes('हिंदी') || cleanTranscript.includes('दो')
-      )) {
+      if (!this.languageSelected && isHindiSpoken) {
         this.languageSelected = true;
         this.voiceId = 'hi-IN-SwaraNeural';
         if (this.callSid) {
@@ -408,7 +426,7 @@ export class MediaStreamHandler {
         }
         this.stopThinkingSound();
         this.playConfirmation(
-          "धन्यवाद। आपने हिंदी चुनी है। बताइए, मैं आपकी क्या सहायता कर सकती हूँ?",
+          "हिंदी चुनी गई। बताइए, मैं आपकी क्या सहायता करूँ?",
           'hi-IN-SwaraNeural'
         );
         return;
@@ -541,13 +559,13 @@ export class MediaStreamHandler {
     if (this.isThinkingSoundActive) return;
     this.isThinkingSoundActive = true;
 
-    // Thinking sound safety timeout: stop background chime after 8 seconds so it never loops forever
+    // Thinking sound safety timeout: stop background chime after 18 seconds so it never loops forever
     this.thinkingMaxTimer = setTimeout(() => {
       if (this.isThinkingSoundActive) {
         logger.info('[VOICE] Thinking sound reached timeout — stopping chime');
         this.stopThinkingSound();
       }
-    }, 8000);
+    }, 18000);
 
     // Grace period of 350ms: if the answer is generated instantly, NO chime ever sounds!
     this.thinkingTimeout = setTimeout(() => {
@@ -592,7 +610,6 @@ export class MediaStreamHandler {
       clearInterval(this.thinkingInterval);
       this.thinkingInterval = null;
       logger.info('[VOICE] Stopped thinking chime — answer ready');
-      this.sendClear();
     }
   }
 

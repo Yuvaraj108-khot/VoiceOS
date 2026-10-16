@@ -103,6 +103,7 @@ export default function KnowledgeCenterPage() {
       setIsAddModalOpen(false);
       resetModalForm();
       showToast(`Source "${created.title}" added and indexed.`);
+      await fetchDocuments();
     } catch (err: any) {
       showToast(`Error adding source: ${err.message || 'Unknown'}`);
     } finally {

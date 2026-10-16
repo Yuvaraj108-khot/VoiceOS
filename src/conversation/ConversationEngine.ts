@@ -9,9 +9,31 @@ import { prisma } from '../lib/prisma';
 import { executeLookupBusinessData } from './tools/lookupBusinessData';
 import { slotFillingEngine } from './SlotFillingEngine';
 
+const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export class ConversationEngine {
   private orgIdCache = new Map<string, string>();
+  private callCache = new Map<string, { organizationId: string; id: string }>();
   private dataProfileCache = new Map<string, { profile: any; expiry: number }>();
+
+  private async getCallInfo(callId: string): Promise<{ organizationId: string; id: string } | null> {
+    if (!callId) return null;
+    if (this.callCache.has(callId)) return this.callCache.get(callId)!;
+    try {
+      const call = await prisma.call.findFirst({
+        where: isUuid(callId)
+          ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
+          : { twilioCallSid: callId },
+        select: { organizationId: true, id: true }
+      });
+      if (call) {
+        this.callCache.set(callId, call);
+        this.orgIdCache.set(callId, call.organizationId);
+        return call;
+      }
+    } catch { /* ignore */ }
+    return null;
+  }
 
   /**
    * Helper to extract business entity identifiers (e.g. ORD1002, INV-881, 1002)
@@ -28,19 +50,8 @@ export class ConversationEngine {
       return this.orgIdCache.get(callId)!;
     }
 
-    const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-    try {
-      const call = await prisma.call.findFirst({
-        where: isUuid(callId)
-          ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
-          : { twilioCallSid: callId },
-        select: { organizationId: true }
-      });
-      if (call?.organizationId) {
-        this.orgIdCache.set(callId, call.organizationId);
-        return call.organizationId;
-      }
-    } catch { /* ignore */ }
+    const info = await this.getCallInfo(callId);
+    if (info?.organizationId) return info.organizationId;
 
     if (employeeId && isUuid(employeeId)) {
       try {
@@ -116,18 +127,9 @@ export class ConversationEngine {
         });
         await memoryManager.addMessage(callId, { role: 'assistant', content: clarification });
 
-        try {
-          const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-          const call = await prisma.call.findFirst({
-            where: isUuid(callId)
-              ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
-              : { twilioCallSid: callId },
-            select: { organizationId: true, id: true }
-          });
-          if (call) {
-            callEventEmitter.emitLiveTranscript(call.organizationId, call.id, 'assistant', clarification);
-          }
-        } catch { /* ignore */ }
+        this.getCallInfo(callId).then(call => {
+          if (call) callEventEmitter.emitLiveTranscript(call.organizationId, call.id, 'assistant', clarification);
+        }).catch(() => {});
 
         return clarification;
       }
@@ -234,25 +236,14 @@ export class ConversationEngine {
       const conversationHistory = await memoryManager.getHistory(callId);
 
       // Emit live transcript for caller
-      try {
-        const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-        const call = await prisma.call.findFirst({
-          where: isUuid(callId)
-            ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
-            : { twilioCallSid: callId },
-          select: { organizationId: true, id: true }
-        });
+      this.getCallInfo(callId).then(call => {
         if (call) {
           callEventEmitter.emitLiveTranscript(call.organizationId, call.id, 'user', userInput);
           prisma.callTranscript.create({
-            data: {
-              callId: call.id,
-              speaker: 'caller',
-              text: userInput
-            }
+            data: { callId: call.id, speaker: 'caller', text: userInput }
           }).catch(() => {});
         }
-      } catch { /* ignore */ }
+      }).catch(() => {});
 
       // 2. Process turn with SlotFillingEngine
       const activeContextId = session?.variables?.active_order_id || null;

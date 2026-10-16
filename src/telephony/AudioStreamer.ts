@@ -18,21 +18,20 @@ export class AudioStreamer {
   private preBuffer: Buffer[] = []; // Rolling 200ms pre-speech buffer (10 chunks)
   private totalSpeechBytes: number = 0;
   private consecutiveVoiceChunks: number = 0;
-  private isCancelled: boolean = false;
+  private currentPlaybackId: number = 0;
   private totalChunksReceived: number = 0;
 
   // Thresholds & Constants: strictly calibrated for clean phone speech vs ambient room noise
   private readonly SPEECH_THRESHOLD = 220;       // Reject ambient noise, distant dog barks, and phone rustle (<220 RMS)
   private readonly BARGE_IN_THRESHOLD = 700;     // Intentional close-mic human speech to interrupt AI (guards against echo/barks)
   private readonly BARGE_IN_REQUIRED_CHUNKS = 10; // 10 * 20ms = 200ms sustained speech to confirm barge-in
-  private readonly SILENCE_HANGOVER_CHUNKS = 35; // 35 * 20ms = 700ms silence before completing utterance (allows natural word pauses)
+  private readonly SILENCE_HANGOVER_CHUNKS = 60; // 60 * 20ms = 1200ms silence before completing utterance (allows caller to finish full sentences naturally)
   private readonly MIN_UTTERANCE_BYTES = 3200;   // Minimum 400ms (3200 bytes @ 8kHz) allows natural short words like "yes", "hello"
 
   // Event callbacks
   public onSpeechStart?: () => void;
   public onSpeechComplete?: (mulawBuffer: Buffer) => void;
   public onBargeIn?: () => void;
-  public onDtmfTone?: () => void;
 
   constructor(sendMedia: SendMediaCallback, sendMark: SendMarkCallback) {
     this.sendMedia = sendMedia;
@@ -42,7 +41,7 @@ export class AudioStreamer {
   start(callSid: string) {
     this.callSid = callSid;
     this.resetBuffers();
-    this.isCancelled = false;
+    this.currentPlaybackId++;
     this.totalChunksReceived = 0;
     logger.debug(`[AudioStreamer] Started for call ${callSid}`);
   }
@@ -65,7 +64,8 @@ export class AudioStreamer {
   }
 
   cancelPlayback() {
-    this.isCancelled = true;
+    this.currentPlaybackId++;
+    this.consecutiveVoiceChunks = 0;
   }
 
   private resetBuffers() {
@@ -95,13 +95,6 @@ export class AudioStreamer {
         logger.debug(`[MEDIA STREAM] audio received | audio bytes: ${chunk.length} | total chunks: ${this.totalChunksReceived} | idle RMS: ${rms.toFixed(0)}`);
       }
 
-      // Check for keypad DTMF keypress (Twilio trial prompt bypass)
-      if (chunk.length >= 160 && audioProcessor.isDtmfTone(chunk)) {
-        logger.info('[VAD] Incoming audio is a keypad DTMF tone. Triggering onDtmfTone callback!');
-        this.resetBuffers();
-        this.onDtmfTone?.();
-        return;
-      }
 
       // Check barge-in when AI is speaking
       if (this.isBargeInEnabled && !this.isListening) {
@@ -185,12 +178,6 @@ export class AudioStreamer {
     const utteranceDurationMs = ((fullUtterance.length / 8000) * 1000).toFixed(0);
     this.resetBuffers();
 
-    // Check if utterance is a telephone keypad DTMF tone (trial prompt cleared)
-    if (audioProcessor.isDtmfTone(fullUtterance)) {
-      logger.info(`[VAD] Keypad DTMF tone detected (~${utteranceDurationMs}ms). Triggering onDtmfTone callback!`);
-      this.onDtmfTone?.();
-      return;
-    }
 
     logger.info(`[VOICE] Caller utterance complete — sending to STT (buffer: ${fullUtterance.length} bytes, ~${utteranceDurationMs}ms)`);
 
@@ -212,13 +199,13 @@ export class AudioStreamer {
       return true;
     }
 
-    this.isCancelled = false;
+    const playbackId = ++this.currentPlaybackId;
     const CHUNK_SIZE = 640; // 80ms of 8000Hz 8-bit mono audio
     const CHUNK_INTERVAL_MS = 60; // Send slightly faster than real-time to stay ahead of playback
 
     for (let offset = 0; offset < mulawBuffer.length; offset += CHUNK_SIZE) {
-      if (this.isCancelled) {
-        logger.debug('[AudioStreamer] Playback cancelled mid-stream (barge-in)');
+      if (playbackId !== this.currentPlaybackId) {
+        logger.debug(`[AudioStreamer] Playback ${playbackId} cancelled mid-stream (active: ${this.currentPlaybackId})`);
         return false;
       }
       const chunk = mulawBuffer.subarray(offset, Math.min(offset + CHUNK_SIZE, mulawBuffer.length));
@@ -230,16 +217,16 @@ export class AudioStreamer {
       }
     }
 
-    if (markName && !this.isCancelled) {
+    if (markName && playbackId === this.currentPlaybackId) {
       this.sendMark(markName);
     }
-    return !this.isCancelled;
+    return playbackId === this.currentPlaybackId;
   }
 
   stop() {
     this.isListening = false;
     this.isBargeInEnabled = false;
-    this.isCancelled = true;
+    this.currentPlaybackId++;
     this.resetBuffers();
     this.callSid = null;
     logger.debug(`[AudioStreamer] Stopped`);

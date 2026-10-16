@@ -5,7 +5,9 @@ export const createKnowledgeDocumentSchema = z.object({
   name: z.string().optional(),
   title: z.string().optional(),
   type: z.string().optional(),
-  sourceUrl: z.string().url().optional(),
+  sourceUrl: z.string().optional(),
+  url: z.string().optional(),
+  content: z.string().optional(),
   primaryKey: z.string().optional(),
   metadata: z.record(z.any()).optional(),
 });

@@ -189,6 +189,76 @@ export class AudioProcessor {
   }
 
   /**
+   * Decodes a phone keypad DTMF tone (0-9, *, #) from an incoming μ-law buffer using the Goertzel algorithm.
+   * Returns the decoded digit character ('0'-'9', '*', '#') or null if not a valid DTMF tone.
+   */
+  decodeDtmfDigit(mulawBuffer: Buffer): string | null {
+    if (!mulawBuffer || mulawBuffer.length < 160) return null;
+    const N = mulawBuffer.length;
+    const SAMPLING_RATE = 8000;
+    const DTMF_LOW = [697, 770, 852, 941];
+    const DTMF_HIGH = [1209, 1336, 1477, 1633];
+    const DTMF_MAP: string[][] = [
+      ['1', '2', '3', 'A'],
+      ['4', '5', '6', 'B'],
+      ['7', '8', '9', 'C'],
+      ['*', '0', '#', 'D']
+    ];
+
+    let totalPower = 0;
+    const samples: number[] = new Array(N);
+    for (let i = 0; i < N; i++) {
+      const s = this.mulawToLinear(mulawBuffer[i]);
+      samples[i] = s;
+      totalPower += s * s;
+    }
+    if (totalPower < 60000) return null;
+
+    const goertzelPower = (freq: number) => {
+      const k = Math.round((N * freq) / SAMPLING_RATE);
+      const omega = (2 * Math.PI * k) / N;
+      const coeff = 2 * Math.cos(omega);
+      let s_prev = 0;
+      let s_prev2 = 0;
+      for (let i = 0; i < N; i++) {
+        const s = samples[i] + coeff * s_prev - s_prev2;
+        s_prev2 = s_prev;
+        s_prev = s;
+      }
+      return s_prev * s_prev + s_prev2 * s_prev2 - coeff * s_prev * s_prev2;
+    };
+
+    let bestLowIdx = -1;
+    let maxLowPower = 0;
+    for (let i = 0; i < DTMF_LOW.length; i++) {
+      const p = goertzelPower(DTMF_LOW[i]);
+      if (p > maxLowPower) {
+        maxLowPower = p;
+        bestLowIdx = i;
+      }
+    }
+
+    let bestHighIdx = -1;
+    let maxHighPower = 0;
+    for (let j = 0; j < DTMF_HIGH.length; j++) {
+      const p = goertzelPower(DTMF_HIGH[j]);
+      if (p > maxHighPower) {
+        maxHighPower = p;
+        bestHighIdx = j;
+      }
+    }
+
+    if (bestLowIdx === -1 || bestHighIdx === -1) return null;
+
+    const dtmfCombined = (maxLowPower + maxHighPower) / (N / 2);
+    const ratio = dtmfCombined / totalPower;
+    if (ratio > 0.22) {
+      return DTMF_MAP[bestLowIdx][bestHighIdx];
+    }
+    return null;
+  }
+
+  /**
    * Legacy method for backward compatibility
    */
   processForTwilio(pcmBuffer: Buffer): Buffer {
