@@ -14,12 +14,14 @@ import NotificationsPage from './pages/NotificationsPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 
 import { AuthProvider } from './contexts/AuthContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/signin" element={<SignInPage />} />
           
@@ -29,7 +31,9 @@ function App() {
             <Route path="ai-employees" element={<AIEmployeesPage />} />
             <Route path="create-employee" element={<CreateEmployeePage />} />
             <Route path="live-call-center" element={<LiveCallCenterPage />} />
+            <Route path="workflows" element={<WorkflowBuilderPage />} />
             <Route path="workflow-builder" element={<WorkflowBuilderPage />} />
+            <Route path="knowledge" element={<KnowledgeCenterPage />} />
             <Route path="knowledge-center" element={<KnowledgeCenterPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
@@ -39,6 +43,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

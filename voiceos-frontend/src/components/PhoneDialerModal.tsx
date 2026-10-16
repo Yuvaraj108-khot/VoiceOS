@@ -14,8 +14,8 @@ interface PhoneDialerModalProps {
 }
 
 const COUNTRY_CODES = [
-  { code: '+1', country: 'US/CA', flag: '🇺🇸' },
   { code: '+91', country: 'IN', flag: '🇮🇳' },
+  { code: '+1', country: 'US/CA', flag: '🇺🇸' },
   { code: '+44', country: 'UK', flag: '🇬🇧' },
   { code: '+61', country: 'AU', flag: '🇦🇺' },
   { code: '+49', country: 'DE', flag: '🇩🇪' },
@@ -31,7 +31,7 @@ export const PhoneDialerModal: React.FC<PhoneDialerModalProps> = ({
   initialPhoneNumber = '',
 }) => {
   const navigate = useNavigate();
-  const [countryCode, setCountryCode] = useState('+1');
+  const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
   const [employees, setEmployees] = useState<AIEmployee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(preselectedEmployeeId || '');
@@ -83,11 +83,39 @@ export const PhoneDialerModal: React.FC<PhoneDialerModalProps> = ({
 
   const getE164Number = (): string => {
     const cleanCode = countryCode.replace(/[^\d+]/g, '');
-    const rawDigits = phoneNumber.replace(/\D/g, '');
+    const trimmed = phoneNumber.trim();
+    if (!trimmed) return '';
+
+    const rawDigits = trimmed.replace(/\D/g, '');
     if (!rawDigits) return '';
-    if (phoneNumber.trim().startsWith('+')) {
+
+    // If user explicitly typed a leading '+'
+    if (trimmed.startsWith('+')) {
       return '+' + rawDigits;
     }
+
+    // India specific rule (+91):
+    // Standard mobile numbers are 10 digits (often starting with 91xxx, 98xxx, etc.)
+    // Only if user typed all 12 digits (91 + 10 digits) do we treat it as already containing the country code.
+    if (cleanCode === '+91') {
+      if (rawDigits.length === 12 && rawDigits.startsWith('91')) {
+        return '+' + rawDigits;
+      }
+      if (rawDigits.length === 11 && rawDigits.startsWith('0')) {
+        return '+91' + rawDigits.slice(1);
+      }
+      return '+91' + rawDigits;
+    }
+
+    // US/Canada (+1): 10-digit standard
+    if (cleanCode === '+1') {
+      if (rawDigits.length === 11 && rawDigits.startsWith('1')) {
+        return '+' + rawDigits;
+      }
+      return '+1' + rawDigits;
+    }
+
+    // Other countries
     return (cleanCode.startsWith('+') ? cleanCode : '+' + cleanCode) + rawDigits;
   };
 
@@ -137,7 +165,7 @@ export const PhoneDialerModal: React.FC<PhoneDialerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-md bg-black/60 backdrop-blur-sm animate-fadeIn">
       <div 
         className="bg-surface border border-outline-variant rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] animate-scaleUp"
         onClick={(e) => e.stopPropagation()}
@@ -294,6 +322,10 @@ export const PhoneDialerModal: React.FC<PhoneDialerModalProps> = ({
                 <span>E.164 Preview: <strong className="text-on-surface font-mono">{getE164Number() || countryCode}</strong></span>
                 <span>Format: +[Country][Number]</span>
               </p>
+              <div className="mt-xs p-xs bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center gap-xs text-[11px] text-on-surface-variant">
+                <span className="material-symbols-outlined text-[14px] text-amber-500 shrink-0">info</span>
+                <span>Twilio Trial: Outbound calls only connect to verified numbers (e.g. <strong className="text-on-surface font-mono">+91 9108796105</strong>).</span>
+              </div>
             </div>
 
             {/* Tactile Keypad (0-9, *, #, +) */}

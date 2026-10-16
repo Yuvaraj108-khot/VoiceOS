@@ -64,4 +64,29 @@ describe('VoiceOS Telephony Pipeline & State Flow', () => {
     const mulaw = await textToSpeech.generateMulawAudio('Hello, this is a test greeting.');
     expect(mulaw.length).toBeGreaterThan(0);
   }, 15000);
+
+  it('twilioVoiceWebhook: should generate TwiML with media stream connection and pause verb', async () => {
+    const { twilioVoiceWebhook } = await import('../../api/webhooks/twilio.webhook');
+    const req: any = {
+      body: { CallSid: 'CA123456789', From: '+15550001', To: '+15550002', Direction: 'outbound-api' },
+      query: { callId: 'call_test123', employeeId: 'emp_test123' },
+      headers: { host: 'localhost:4000' }
+    };
+
+    let sentType = '';
+    let sentContent = '';
+    const res: any = {
+      type: (t: string) => { sentType = t; },
+      send: (body: string) => { sentContent = body; }
+    };
+
+    await twilioVoiceWebhook(req, res);
+
+    expect(sentType).toBe('text/xml');
+    expect(sentContent).toContain('<Connect>');
+    expect(sentContent).toContain('/media-stream">');
+    expect(sentContent).toContain('<Parameter name="callId" value="call_test123"/>');
+    expect(sentContent).toContain('<Parameter name="employeeId" value="emp_test123"/>');
+    expect(sentContent).toContain('<Pause length="3600"/>');
+  });
 });

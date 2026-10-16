@@ -15,18 +15,25 @@ export interface AnalyticsTrend {
 }
 
 const MOCK_OVERVIEW: AnalyticsOverview = {
-  activeEmployees: 12,
-  totalCalls: 15420,
-  avgDuration: '4m 32s',
-  successRate: 91.4,
-  costSaved: 82400,
+  activeEmployees: 0,
+  totalCalls: 0,
+  avgDuration: '0m 0s',
+  successRate: 0,
+  costSaved: 0,
 };
 
 export const analyticsService = {
   getOverview: async (): Promise<AnalyticsOverview> => {
     try {
       const data = await api.get('/analytics/overview');
-      return data.data || data;
+      const payload = data?.data || data;
+      if (!payload || typeof payload !== 'object' || typeof payload.totalCalls !== 'number') {
+        return MOCK_OVERVIEW;
+      }
+      return {
+        ...MOCK_OVERVIEW,
+        ...payload
+      };
     } catch {
       return MOCK_OVERVIEW;
     }
@@ -37,12 +44,7 @@ export const analyticsService = {
       const data = await api.get('/analytics/trend');
       return data.data || data;
     } catch {
-      return [
-        { date: '2024-09-01', calls: 1200, cost: 2400 },
-        { date: '2024-09-08', calls: 1540, cost: 3080 },
-        { date: '2024-09-15', calls: 1380, cost: 2760 },
-        { date: '2024-09-22', calls: 1820, cost: 3640 },
-      ];
+      return [];
     }
   }
 };

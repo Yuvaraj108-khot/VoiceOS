@@ -13,12 +13,34 @@ import { webhookRateLimiter } from './middleware/rateLimiter';
 const app = express();
 
 // Security and utility middlewares
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // API backend serving JSON/WebSockets
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 app.use(cors({ origin: '*' })); // Configure properly in production
 app.use(compression());
 app.use(requestLogger);
 
-// Health check
+// Chrome DevTools probe handler to prevent 404 & CSP console errors
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+  res.status(200).json({});
+});
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// Root & Health check
+app.get('/', (req, res) => {
+  res.status(200).json({
+    name: 'VoiceOS Backend API',
+    status: 'ONLINE',
+    version: '1.0.0',
+    health: '/health',
+    api: '/v1',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });

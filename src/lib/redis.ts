@@ -7,10 +7,9 @@ export const createRedisClient = (): Redis => {
   const client = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
     password: process.env.REDIS_PASSWORD || undefined,
     tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
-    maxRetriesPerRequest: 3,
+    maxRetriesPerRequest: null,
     retryStrategy: (times: number) => {
-      if (times > 10) {
-        logger.error('Redis: Too many retries, giving up');
+      if (times > 5) {
         return null;
       }
       const delay = Math.min(times * 100, 3000);
@@ -24,15 +23,18 @@ export const createRedisClient = (): Redis => {
       }
       return false;
     },
-    enableReadyCheck: true,
-    lazyConnect: false,
+    enableReadyCheck: false,
+    enableOfflineQueue: false,
+    lazyConnect: true,
   });
 
   client.on('connect', () => logger.info('✅ Redis connected'));
   client.on('ready', () => logger.debug('Redis ready'));
-  client.on('error', (err) => logger.error(err, 'Redis error'));
-  client.on('close', () => logger.warn('Redis connection closed'));
-  client.on('reconnecting', () => logger.info('Redis reconnecting...'));
+  client.on('error', (err) => {
+    logger.warn(`Redis connection status: ${err.message}`);
+  });
+  client.on('close', () => logger.debug('Redis connection closed'));
+  client.on('reconnecting', () => logger.debug('Redis reconnecting...'));
 
   return client;
 };

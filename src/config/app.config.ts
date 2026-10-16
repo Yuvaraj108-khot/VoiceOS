@@ -7,7 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(4000),
   API_VERSION: z.string().default('v1'),
-  APP_URL: z.string().url().default('http://localhost:4000'),
+  APP_URL: z.string().url().default('http://localhost:4009'),
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
 
@@ -33,7 +33,7 @@ const envSchema = z.object({
 
 
   GROQ_API_KEY: z.string().optional(),
-  GROQ_MODEL: z.string().default('llama3-70b-8192'),
+  GROQ_MODEL: z.string().default('openai/gpt-oss-120b'),
   GROQ_MAX_TOKENS: z.coerce.number().default(2048),
   GROQ_TEMPERATURE: z.coerce.number().default(0.7),
 
@@ -110,3 +110,20 @@ export const isTest = config.NODE_ENV === 'test';
 export const corsOrigins = config.CORS_ORIGINS
   ? config.CORS_ORIGINS.split(',').map((o: string) => o.trim())
   : ['http://localhost:3000'];
+
+export function getWebhookBaseUrl(): string {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      const match = content.match(/TWILIO_WEBHOOK_BASE_URL=(https:\/\/[^\r\n\s]+)/);
+      if (match && match[1]) {
+        process.env.TWILIO_WEBHOOK_BASE_URL = match[1];
+        return match[1];
+      }
+    }
+  } catch {}
+  return process.env.TWILIO_WEBHOOK_BASE_URL || config.TWILIO_WEBHOOK_BASE_URL || config.APP_URL;
+}

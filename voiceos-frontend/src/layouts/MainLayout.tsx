@@ -10,8 +10,9 @@ export default function MainLayout() {
   const navLinks = [
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/ai-employees', label: 'AI Employees' },
+    { path: '/knowledge', label: 'Knowledge Base' },
     { path: '/live-call-center', label: 'Live Call Center' },
-    { path: '/workflow-builder', label: 'Workflows' },
+    { path: '/workflows', label: 'Workflows' },
     { path: '/analytics', label: 'Analytics' },
     { path: '/settings', label: 'Settings' },
   ];

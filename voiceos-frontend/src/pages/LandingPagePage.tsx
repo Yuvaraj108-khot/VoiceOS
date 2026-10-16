@@ -16,7 +16,7 @@ export default function LandingPagePage() {
 <p className="font-body-lg text-body-lg text-on-surface-variant max-w-xl">Deploy specialized AI agents that integrate with your existing tools, manage complex workflows, and communicate with the precision of your top performers.</p>
 <div className="flex flex-wrap gap-md pt-md">
 <Link to="/dashboard" className="inline-block bg-primary text-on-primary font-label-md text-label-md px-xxl py-md rounded-xl hover:shadow-lg transition-all active:scale-95">Deploy Now</Link>
-<button className="bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-xxl py-md rounded-xl hover:bg-surface-container-low transition-all" onClick={() => alert("Booking a demo!")}>Book a Demo</button>
+<button className="bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-xxl py-md rounded-xl hover:bg-surface-container-low transition-all cursor-pointer" onClick={() => window.location.href = '/employees'}>Book a Demo</button>
 </div>
 </div>
 {/* Showcase Profile Card (Bento Grid Style Element) */}
@@ -191,7 +191,7 @@ export default function LandingPagePage() {
 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span> Custom Model Training</li>
 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span> White-label Branding</li>
 </ul>
-<button className="w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors" onClick={() => alert("Sales contacted!")}>Talk to Sales</button>
+<button className="w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors cursor-pointer" onClick={() => window.location.href = '/employees'}>Talk to Sales</button>
 </div>
 </div>
 </section>

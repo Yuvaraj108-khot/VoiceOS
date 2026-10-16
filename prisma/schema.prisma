@@ -99,6 +99,9 @@ enum DocumentType {
   DOCX
   TXT
   CSV
+  XLSX
+  PPTX
+  SPREADSHEET
   WEBSITE
   FAQ
   CUSTOM
@@ -441,7 +444,7 @@ model PhoneNumber {
 model KnowledgeDocument {
   id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String         @db.Uuid
-  employeeId     String         @db.Uuid
+  employeeId     String?        @db.Uuid
   name           String
   type           DocumentType
   fileUrl        String?
@@ -450,19 +453,38 @@ model KnowledgeDocument {
   sizeBytes      Int?
   status         DocumentStatus @default(PENDING)
   chunkCount     Int            @default(0)
+  rowCount       Int?           @default(0)
   errorMessage   String?
   metadata       Json           @default("{}")
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
 
-  employee       AIEmployee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee       AIEmployee?    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   chunks         KnowledgeChunk[]
+  dataRows       BusinessDataRow[]
 
   @@index([employeeId])
   @@index([organizationId])
   @@index([status])
   @@map("knowledge_documents")
+}
+
+model BusinessDataRow {
+  id             String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId     String            @db.Uuid
+  organizationId String            @db.Uuid
+  rowIndex       Int
+  data           Json
+  primaryKey     String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  document       KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, primaryKey])
+  @@index([documentId])
+  @@map("business_data_rows")
 }
 
 model KnowledgeChunk {

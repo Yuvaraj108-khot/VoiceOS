@@ -13,6 +13,7 @@ router.use(authenticate);
 
 router.get('/', asyncHandler(knowledgeController.list));
 router.get('/:id', asyncHandler(knowledgeController.get));
+router.get('/:id/rows', asyncHandler(knowledgeController.getRows));
 
 router.post(
   '/',

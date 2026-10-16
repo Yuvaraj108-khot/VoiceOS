@@ -55,6 +55,7 @@ export class CallSessionManager {
    */
   async endSession(callId: string, finalStatus: 'COMPLETED' | 'FAILED', durationSeconds: number): Promise<void> {
     try {
+      const session = await this.getSession(callId);
       this.localSessions.delete(callId);
 
       if (redis.status === "ready") {
@@ -74,6 +75,16 @@ export class CallSessionManager {
           endedAt: new Date(),
         }
       });
+
+      if (session?.employeeId) {
+        await prisma.aIEmployee.update({
+          where: { id: session.employeeId },
+          data: {
+            callsHandled: { increment: 1 },
+            totalCallDuration: { increment: durationSeconds }
+          }
+        }).catch(() => null);
+      }
       
       logger.info(`Session ${callId} ended with status ${finalStatus}`);
     } catch (err) {

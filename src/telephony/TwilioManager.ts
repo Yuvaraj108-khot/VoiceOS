@@ -1,5 +1,5 @@
 import twilio from 'twilio';
-import { config } from '../config/app.config';
+import { config, getWebhookBaseUrl } from '../config/app.config';
 import { logger } from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../utils/ApiError';
@@ -70,12 +70,13 @@ export class TwilioManager {
 
     const number = localNumbers[0];
 
+    const webhookBase = getWebhookBaseUrl();
+
     // Purchase the number
     const purchased = await this.client.incomingPhoneNumbers.create({
       phoneNumber: number.phoneNumber,
-      voiceUrl: `https://${config.APP_URL}/webhooks/twilio/inbound`, // Set inbound webhook
-      statusCallback: `https://${config.APP_URL}/webhooks/twilio/status`,
-      
+      voiceUrl: `${webhookBase}/webhooks/twilio/inbound`, // Set inbound webhook
+      statusCallback: `${webhookBase}/webhooks/twilio/status`,
     });
 
     // Save to DB

@@ -27,10 +27,12 @@ const createLimiter = (options: {
     },
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args: string[]) => (redis as any).call(...args),
-      prefix: `rl:${options.prefix}:`,
-    }),
+    store: redis.status === 'ready'
+      ? new RedisStore({
+          sendCommand: (...args: string[]) => (redis as any).call(...args),
+          prefix: `rl:${options.prefix}:`,
+        })
+      : undefined,
     keyGenerator: (req: Request) => {
       // Use IP + user ID if authenticated (better than just IP)
       const userId = (req as any).user?.id ?? '';

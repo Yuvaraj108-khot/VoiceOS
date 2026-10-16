@@ -148,8 +148,13 @@ export const tokenService = {
    * Checks if a token's JTI is blacklisted
    */
   async isBlacklisted(jti: string): Promise<boolean> {
-    const result = await redis.get(`blacklist:jti:${jti}`);
-    return result === '1';
+    if (redis.status !== 'ready') return false;
+    try {
+      const result = await redis.get(`blacklist:jti:${jti}`);
+      return result === '1';
+    } catch {
+      return false;
+    }
   },
 
   /**

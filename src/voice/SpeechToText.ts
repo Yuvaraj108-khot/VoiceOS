@@ -1,10 +1,12 @@
 import { logger } from '../lib/logger';
 import { groq } from '../lib/groq';
-import { toFile } from 'groq-sdk';
 import { audioProcessor } from './AudioProcessor';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const GROQ_STT_MODEL = process.env.GROQ_STT_MODEL ?? 'whisper-large-v3-turbo';
-const DEEPGRAM_LANGUAGE = process.env.DEEPGRAM_LANGUAGE ?? 'en';
+const STT_LANGUAGE = process.env.STT_LANGUAGE ?? ''; // Empty = auto-detect (supports Hinglish!)
 
 export class SpeechToText {
   /**
@@ -14,17 +16,25 @@ export class SpeechToText {
     try {
       if (!mulawBuffer || mulawBuffer.length < 800) {
         // Less than 100ms of audio, skip
+        logger.debug(`[STT] Audio buffer too small (${mulawBuffer?.length || 0} bytes), skipping`);
         return '';
       }
+
+      const inputDurationSec = (mulawBuffer.length / 8000).toFixed(2);
+      logger.info(`[STT] audio buffer size: ${mulawBuffer.length} bytes (~${inputDurationSec}s)`);
+      logger.info(`[STT] conversion started: mu-law 8kHz -> PCM WAV 16kHz`);
+
       const tFfmpeg = Date.now();
       const wavBuffer = await audioProcessor.mulawToWav(mulawBuffer);
       const ffmpegMs = Date.now() - tFfmpeg;
+      const wavDurationSec = ((wavBuffer.length - 44) / 32000).toFixed(2);
 
-      const tGroq = Date.now();
+      logger.info(`[STT] conversion completed: ${wavBuffer.length} bytes in ${ffmpegMs}ms`);
+      logger.info(`[STT] WAV duration: ${wavDurationSec}s | sample rate: 16000Hz | channels: 1 | 16-bit PCM`);
+
       const text = await this.transcribeBuffer(wavBuffer, 'audio/wav');
-      const groqMs = Date.now() - tGroq;
 
-      logger.info(`[STT-PROFILE] ffmpeg_wav: ${ffmpegMs}ms | groq_whisper: ${groqMs}ms | total_stt: ${Date.now() - tFfmpeg}ms`);
+      logger.info(`[STT-PROFILE] ffmpeg_wav: ${ffmpegMs}ms | total_stt_pipeline: ${Date.now() - tFfmpeg}ms`);
       return text;
     } catch (error: any) {
       logger.error(`[STT] Error transcribing mulaw buffer: ${error.message}`);
@@ -37,26 +47,99 @@ export class SpeechToText {
    * Accepts a Buffer of audio data (mu-law, PCM, mp3, wav, etc.)
    * and returns the transcribed text.
    */
+  /**
+   * Transcribes a raw audio buffer using Groq's Whisper endpoint via direct high-speed HTTP fetch.
+   * Completely avoids groq-sdk toFile streaming freeze on Windows Node 22 (1.4s vs 94s).
+   */
   async transcribeBuffer(audioBuffer: Buffer, mimeType: string = 'audio/wav'): Promise<string> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout for free-tier Groq
+
     try {
-      logger.debug(`[STT] Transcribing ${audioBuffer.length} bytes via Groq Whisper`);
+      logger.info(`[STT] Whisper request started: model=${GROQ_STT_MODEL} | payload: ${audioBuffer.length} bytes`);
 
-      const file = await toFile(audioBuffer, 'audio.wav', { type: mimeType });
+      const tGroq = Date.now();
+      const form = new FormData();
+      const blob = new Blob([audioBuffer], { type: mimeType });
+      form.append('file', blob, 'audio.wav');
+      form.append('model', GROQ_STT_MODEL);
+      form.append('response_format', 'json');
+      // Auto-detect language — handles English, Hindi, and Hinglish (English+Hindi mix) seamlessly!
+      if (STT_LANGUAGE) {
+        form.append('language', STT_LANGUAGE);
+      }
 
-      const transcription = await groq.audio.transcriptions.create({
-        file,
-        model: GROQ_STT_MODEL,
-        language: DEEPGRAM_LANGUAGE.split('-')[0], // e.g. "en" from "en-US"
-        response_format: 'json',
+      const apiKey = process.env.GROQ_API_KEY;
+      const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: form,
+        signal: controller.signal,
       });
 
-      const text = transcription.text?.trim() ?? '';
-      logger.debug(`[STT] Transcribed: "${text}"`);
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        logger.error(`[STT] Groq Whisper HTTP ${res.status}: ${errText}`);
+        return '';
+      }
+
+      const data: any = await res.json();
+      const groqMs = Date.now() - tGroq;
+      let text = data.text?.trim() ?? '';
+
+      // Filter out non-speech noise, dog barks, and Whisper phantom hallucinations
+      if (this.isNoiseHallucination(text)) {
+        logger.info(`[STT] Ignored non-speech noise / hallucination: "${text}"`);
+        return '';
+      }
+
+      logger.info(`[STT] Whisper response: status=200 (${groqMs}ms)`);
+      logger.info(`[STT] transcript: "${text}"`);
       return text;
-    } catch (error) {
-      logger.error(`[STT] Groq Whisper transcription failed: ${error}`);
+    } catch (error: any) {
+      clearTimeout(timeout);
+      logger.error(`[STT] Groq Whisper transcription failed: ${error.message || error}`);
       return '';
     }
+  }
+
+  private isNoiseHallucination(rawText: string): boolean {
+    if (!rawText || rawText.trim().length === 0) return true;
+    const lower = rawText.toLowerCase().trim();
+
+    // 1. Bracketed or parenthesized sound effects: [barking], (laughter), *music*, etc.
+    const strippedBrackets = lower.replace(/\[.*?\]|\(.*?\)|<.*?>|\*.*?\*/g, '').trim();
+    if (strippedBrackets.length === 0) {
+      return true;
+    }
+
+    // 2. Common Whisper phantom hallucinations produced on animal sounds or sharp room noise
+    const phantomPhrases = [
+      'you got to give up',
+      'thank you for watching',
+      'thanks for watching',
+      'please subscribe',
+      'subtitles by',
+      'translated by',
+      'amara.org',
+      'so you',
+      'thank you very much.',
+      'thank you.',
+    ];
+    for (const phrase of phantomPhrases) {
+      if (lower === phrase || lower === phrase + '.') {
+        return true;
+      }
+    }
+
+    // 3. Pure punctuation
+    if (/^[.\s,?!'"\-_~]+$/.test(rawText)) return true;
+
+    return false;
   }
 
   /**

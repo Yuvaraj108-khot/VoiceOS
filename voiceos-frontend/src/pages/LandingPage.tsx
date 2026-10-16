@@ -1,7 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [demoEmail, setDemoEmail] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleDemoSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsDemoModalOpen(false);
+    setDemoEmail('');
+    setCompanyName('');
+    showToast('Demo request received! Our enterprise team will connect within 2 hours.');
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const card = document.querySelector('.transform') as HTMLElement;
@@ -60,7 +78,7 @@ export default function LandingPage() {
               
               <div className="flex flex-wrap gap-md pt-md">
                 <Link to="/employees" className="bg-primary text-on-primary font-label-md text-label-md px-xxl py-md rounded-xl hover:shadow-lg transition-all active:scale-95">Deploy Now</Link>
-                <button className="bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-xxl py-md rounded-xl hover:bg-surface-container-low transition-all" onClick={() => alert("Booking a demo!")}>Book a Demo</button>
+                <button className="bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-xxl py-md rounded-xl hover:bg-surface-container-low transition-all cursor-pointer" onClick={() => setIsDemoModalOpen(true)}>Book a Demo</button>
               </div>
             </div>
             
@@ -245,7 +263,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]">check_circle</span> Custom Model Training</li>
                 <li className="flex items-center gap-md font-body-sm"><span className="material-symbols-outlined text-primary text-[20px]">check_circle</span> White-label Branding</li>
               </ul>
-              <button className="w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors" onClick={() => alert("Sales contacted!")}>Talk to Sales</button>
+              <button className="w-full py-md border border-outline-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors cursor-pointer" onClick={() => setIsDemoModalOpen(true)}>Talk to Sales</button>
             </div>
           </div>
         </section>
@@ -318,6 +336,78 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-primary text-on-primary px-lg py-md rounded-xl shadow-xl flex items-center gap-sm animate-bounce">
+          <span className="material-symbols-outlined text-[20px]">check_circle</span>
+          <span className="font-label-md">{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Book a Demo / Talk to Sales Modal */}
+      {isDemoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-md">
+          <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-md p-xl shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-lg">
+              <h3 className="font-headline-md text-on-surface flex items-center gap-xs">
+                <span className="material-symbols-outlined text-primary">contact_support</span>
+                Schedule Enterprise Demo
+              </h3>
+              <button onClick={() => setIsDemoModalOpen(false)} className="text-on-surface-variant hover:text-on-surface cursor-pointer">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleDemoSubmit} className="space-y-md">
+              <div>
+                <label className="font-label-md text-on-surface block mb-xs">Company Name</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Acme Corp"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg font-body-md focus:outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="font-label-md text-on-surface block mb-xs">Work Email</label>
+                <input
+                  required
+                  type="email"
+                  placeholder="alex@acme.com"
+                  value={demoEmail}
+                  onChange={(e) => setDemoEmail(e.target.value)}
+                  className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg font-body-md focus:outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="font-label-md text-on-surface block mb-xs">Expected Call Volume</label>
+                <select className="w-full h-10 px-md bg-surface-container-low border border-outline-variant rounded-lg font-body-md focus:outline-none focus:border-primary">
+                  <option>1,000 - 10,000 calls / month</option>
+                  <option>10,000 - 50,000 calls / month</option>
+                  <option>50,000+ calls / month (Enterprise VPC)</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-sm pt-md">
+                <button
+                  type="button"
+                  onClick={() => setIsDemoModalOpen(false)}
+                  className="px-md py-xs text-on-surface-variant hover:text-on-surface font-label-md cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-lg py-xs bg-primary text-on-primary rounded-xl font-label-md shadow-sm hover:opacity-90 cursor-pointer"
+                >
+                  Request Demo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

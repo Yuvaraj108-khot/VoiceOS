@@ -53,7 +53,7 @@ export default function DashboardPage() {
 </div>
 <div className="mt-xl">
 <p className="font-label-sm text-label-sm text-on-surface-variant uppercase">Calls Today</p>
-<h3 className="font-display text-display leading-tight">{loading ? '...' : overview?.totalCalls.toLocaleString() || '0'}</h3>
+<h3 className="font-display text-display leading-tight">{loading ? '...' : (overview?.totalCalls != null ? overview.totalCalls.toLocaleString() : '0')}</h3>
 </div>
 <div className="mt-md flex items-end gap-xs h-12">
 <div className="flex-1 bg-primary-fixed h-4 rounded-t-sm animate-draw-up" style={{"animationDelay":"100ms"}}></div>

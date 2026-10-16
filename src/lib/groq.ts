@@ -1,12 +1,15 @@
 import Groq from 'groq-sdk';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export const GROQ_MODEL = process.env.GROQ_MODEL ?? 'llama3-70b-8192';
-export const GROQ_MAX_TOKENS = parseInt(process.env.GROQ_MAX_TOKENS ?? '2048', 10);
-export const GROQ_TEMPERATURE = parseFloat(process.env.GROQ_TEMPERATURE ?? '0.7');
+export const GROQ_MODEL = process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b';
+export const GROQ_MAX_TOKENS = parseInt(process.env.GROQ_MAX_TOKENS ?? '150', 10);
+export const GROQ_TEMPERATURE = parseFloat(process.env.GROQ_TEMPERATURE ?? '0.4');
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -23,7 +26,7 @@ export async function streamChatCompletion(
     model?: string;
     maxTokens?: number;
     temperature?: number;
-    onChunk?: (delta: string) => void;
+    onChunk?: (delta: string) => Promise<void> | void;
   } = {},
 ): Promise<string> {
   const stream = await groq.chat.completions.create({
@@ -40,7 +43,9 @@ export async function streamChatCompletion(
     const delta = chunk.choices[0]?.delta?.content ?? '';
     if (delta) {
       fullText += delta;
-      options.onChunk?.(delta);
+      if (options.onChunk) {
+        await options.onChunk(delta);
+      }
     }
   }
 

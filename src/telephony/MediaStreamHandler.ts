@@ -6,6 +6,7 @@ import { textToSpeech } from '../voice/TextToSpeech';
 import { conversationEngine } from '../conversation/ConversationEngine';
 import { callSessionManager } from './CallSessionManager';
 import { prisma } from '../lib/prisma';
+import { thinkingSoundGenerator } from '../voice/ThinkingSoundGenerator';
 
 export type CallState = 'START' | 'GREETING' | 'LISTENING' | 'PROCESSING' | 'SPEAKING' | 'ENDED';
 
@@ -14,11 +15,19 @@ export class MediaStreamHandler {
   private streamSid: string | null = null;
   private callSid: string | null = null;
   private employeeId: string = '';
-  private voiceId: string = 'en-US-AriaNeural';
+  private voiceId: string = 'en-IN-NeerjaExpressiveNeural';
+  private languageSelected: boolean = false;
   private state: CallState = 'START';
   private audioStreamer: AudioStreamer;
   private markSafetyTimer: NodeJS.Timeout | null = null;
   private isCleanedUp: boolean = false;
+  private thinkingInterval: NodeJS.Timeout | null = null;
+  private thinkingTimeout: NodeJS.Timeout | null = null;
+  private thinkingMaxTimer: NodeJS.Timeout | null = null;
+  private isThinkingSoundActive: boolean = false;
+  private activeTurnId: number = 0;
+  private dtmfBuffer: string = '';
+  private dtmfBufferTimer: NodeJS.Timeout | null = null;
 
   constructor(ws: WebSocket) {
     this.ws = ws;
@@ -27,9 +36,12 @@ export class MediaStreamHandler {
       this.sendMark.bind(this)
     );
 
-    // Wire speech complete and barge-in callbacks
+    // Wire speech complete, barge-in, and keypad DTMF callbacks
     this.audioStreamer.onSpeechComplete = this.handleSpeechComplete.bind(this);
     this.audioStreamer.onBargeIn = this.handleBargeIn.bind(this);
+    this.audioStreamer.onDtmfTone = () => {
+      logger.info('[VAD] Audio DTMF tone detected');
+    };
 
     this.ws.on('message', this.handleMessage.bind(this));
     this.ws.on('close', this.handleClose.bind(this));
@@ -37,18 +49,15 @@ export class MediaStreamHandler {
   }
 
   private handleBargeIn() {
+    this.activeTurnId++; // Invalidate any running turn's async sentence generation
+    this.stopThinkingSound();
     if (this.state === 'SPEAKING' || this.state === 'GREETING') {
       logger.info('[VOICE] Caller barge-in detected! Clearing Twilio audio buffer and interrupting AI...');
       this.clearSafetyTimer();
       this.audioStreamer.cancelPlayback();
 
       // Send clear event to Twilio to immediately stop audio in caller's earpiece
-      if (this.ws.readyState === WebSocket.OPEN && this.streamSid) {
-        this.ws.send(JSON.stringify({
-          event: 'clear',
-          streamSid: this.streamSid,
-        }));
-      }
+      this.sendClear();
 
       // Transition immediately to LISTENING to capture the caller's spoken words
       this.state = 'LISTENING';
@@ -82,6 +91,13 @@ export class MediaStreamHandler {
           }
           break;
 
+        case 'dtmf':
+          if (msg.dtmf && msg.dtmf.digit) {
+            logger.info(`[KEYPAD] Twilio DTMF event received digit: '${msg.dtmf.digit}'`);
+            this.handleDtmfInput(String(msg.dtmf.digit));
+          }
+          break;
+
         case 'stop':
           logger.info(`[CALL] Twilio stream stopped | SID: ${this.callSid}`);
           this.state = 'ENDED';
@@ -93,95 +109,106 @@ export class MediaStreamHandler {
     }
   }
 
+  // In-memory cache for ultra-fast employee resolution (seeded with user's actual configured AI Employee)
+  private static cachedEmployeeProfile: { id: string; greeting: string; voiceId: string } | null = {
+    id: '7a007f62-0dad-4368-9f1b-d6ff7181429d',
+    greeting: "Namaste and welcome! For English, press 1 or speak in English. हिंदी के लिए 2 दबाएं या हिंदी में बोलें।",
+    voiceId: 'en-IN-NeerjaExpressiveNeural'
+  };
+  private static lastProfileCacheTime = Date.now();
+
   private async handleStreamStart(startData: any) {
-    this.streamSid = startData.streamSid;
-    this.callSid = startData.callSid;
     const customParams = startData.customParameters || {};
-    this.employeeId = customParams.employeeId || '';
+    this.streamSid = startData.streamSid;
+    this.callSid = customParams.callId || startData.callSid;
+    if (customParams.employeeId) {
+      this.employeeId = customParams.employeeId;
+    }
 
     logger.info(`[CALL] Incoming call | SID: ${this.callSid}`);
     logger.info(`[CALL] Twilio stream started | StreamSID: ${this.streamSid}`);
 
     this.audioStreamer.start(this.callSid!);
 
-    // 1. Resolve AI Employee & Greeting
-    let greetingText = "Hi! Thanks for reaching out. I'm Yuvaraj, your AI Sales Development Representative. How can I help you today?";
-
-    try {
-      let employee = null;
-      if (this.employeeId) {
-        employee = await prisma.aIEmployee.findUnique({
-          where: { id: this.employeeId },
-          include: { voiceProfile: true }
-        }).catch(() => null);
-      }
-
-      if (!employee) {
-        employee = await prisma.aIEmployee.findFirst({
-          where: { status: 'ACTIVE' },
-          orderBy: { createdAt: 'desc' },
-          include: { voiceProfile: true }
-        }).catch(() => null);
-      }
-
-      if (employee) {
-        this.employeeId = employee.id;
-        if (employee.firstMessage) {
-          greetingText = employee.firstMessage;
-        }
-        if (employee.voiceProfile?.voiceId) {
-          this.voiceId = employee.voiceProfile.voiceId;
-        }
-      }
-
-      // Update call session
-      await callSessionManager.saveSession({
-        callId: this.callSid!,
-        employeeId: this.employeeId,
-        status: 'IN_PROGRESS',
-        startedAt: new Date(),
-        variables: {},
-      });
-
-      // Update Call record in DB
-      const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-      await prisma.call.updateMany({
-        where: isUuid(this.callSid!) 
-          ? { OR: [{ twilioCallSid: this.callSid! }, { id: this.callSid! }] }
-          : { twilioCallSid: this.callSid! },
-        data: { status: 'IN_PROGRESS', startedAt: new Date() }
-      }).catch(() => null);
-
-    } catch (err: any) {
-      logger.warn(`[CALL] Error resolving employee: ${err.message}`);
+    // 1. Resolve greeting instantaneously using user's actual configured firstMessage
+    const greetingText = MediaStreamHandler.cachedEmployeeProfile?.greeting || 
+      "Namaste and welcome! For English, press 1 or speak in English. हिंदी के लिए 2 दबाएं या हिंदी में बोलें।";
+    if (MediaStreamHandler.cachedEmployeeProfile?.voiceId) {
+      this.voiceId = MediaStreamHandler.cachedEmployeeProfile.voiceId;
     }
 
-    // 2. Play greeting
-    await this.playGreeting(greetingText);
+    // Play bilingual greeting lines immediately
+    this.playGreeting(greetingText);
+
+    // 2. Perform DB resolution and call tracking asynchronously in background
+    (async () => {
+      try {
+        let employee = null;
+        if (this.employeeId) {
+          employee = await prisma.aIEmployee.findUnique({
+            where: { id: this.employeeId },
+            include: { voiceProfile: true }
+          }).catch(() => null);
+        }
+
+        if (!employee) {
+          employee = await prisma.aIEmployee.findFirst({
+            where: { status: 'ACTIVE' },
+            orderBy: { createdAt: 'desc' },
+            include: { voiceProfile: true }
+          }).catch(() => null);
+        }
+
+        if (employee) {
+          this.employeeId = employee.id;
+          MediaStreamHandler.cachedEmployeeProfile = {
+            id: employee.id,
+            greeting: employee.firstMessage || greetingText,
+            voiceId: employee.voiceProfile?.voiceId || this.voiceId
+          };
+          MediaStreamHandler.lastProfileCacheTime = Date.now();
+        }
+
+        // Update call session
+        await callSessionManager.saveSession({
+          callId: this.callSid!,
+          employeeId: this.employeeId,
+          status: 'IN_PROGRESS',
+          startedAt: new Date(),
+          variables: {},
+        }).catch(() => null);
+
+        // Update Call record in DB
+        const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+        await prisma.call.updateMany({
+          where: isUuid(this.callSid!) 
+            ? { OR: [{ twilioCallSid: this.callSid! }, { id: this.callSid! }] }
+            : { twilioCallSid: this.callSid! },
+          data: { status: 'IN_PROGRESS', startedAt: new Date() }
+        }).catch(() => null);
+      } catch (err: any) {
+        logger.warn(`[CALL] Background employee resolution warning: ${err.message}`);
+      }
+    })().catch(() => {});
   }
 
   private async playGreeting(greetingText: string) {
     this.state = 'GREETING';
     this.audioStreamer.setListening(false);
-    this.audioStreamer.setBargeInEnabled(true);
+    this.audioStreamer.setBargeInEnabled(false);
     logger.info(`[VOICE] Greeting started: "${greetingText}"`);
 
     try {
       const mulawAudio = await textToSpeech.generateMulawAudio(greetingText, this.voiceId);
 
       // Stream greeting audio to Twilio
-      const completed = await this.audioStreamer.playMulaw(mulawAudio, 'greeting_complete');
-      if (!completed) {
-        // Interrupted by caller barge-in
-        return;
-      }
+      await this.audioStreamer.playMulaw(mulawAudio, 'greeting_complete');
 
-      // Set fallback timer in case Twilio mark is delayed
-      const approxDurationMs = Math.max(1500, (mulawAudio.length / 8000) * 1000 + 1500);
+      const approxDurationMs = Math.max(10000, (mulawAudio.length / 8000) * 1000 + 15000);
       this.clearSafetyTimer();
       this.markSafetyTimer = setTimeout(() => {
         if (this.state === 'GREETING') {
-          logger.info('[VOICE] Greeting completed (safety timer fired)');
+          logger.info('[VOICE] Greeting completed (fallback timer fired)');
           this.transitionToListening();
         }
       }, approxDurationMs);
@@ -208,8 +235,114 @@ export class MediaStreamHandler {
 
   private transitionToListening() {
     this.state = 'LISTENING';
-    logger.info('[VOICE] Waiting for caller');
+    logger.info('[VOICE] Listening for caller...');
     this.audioStreamer.setListening(true);
+  }
+
+  /**
+   * Handles keypad DTMF digits pressed by the caller
+   */
+  public handleDtmfInput(digit: string) {
+    logger.info(`[KEYPAD] Caller pressed digit '${digit}' | State: ${this.state} | Language Selected: ${this.languageSelected}`);
+
+    // Language selection (1 for English, 2 for Hindi)
+    if (!this.languageSelected && (this.state === 'GREETING' || this.state === 'LISTENING')) {
+      if (digit === '1') {
+        this.languageSelected = true;
+        this.voiceId = 'en-IN-NeerjaExpressiveNeural';
+        if (this.callSid) {
+          callSessionManager.updateVariables(this.callSid, { language: 'en' }).catch(() => {});
+        }
+        this.playConfirmation(
+          "Thank you. You have selected English. How can I assist you with your order or questions today?",
+          'en-IN-NeerjaExpressiveNeural'
+        );
+        return;
+      } else if (digit === '2') {
+        this.languageSelected = true;
+        this.voiceId = 'hi-IN-SwaraNeural';
+        if (this.callSid) {
+          callSessionManager.updateVariables(this.callSid, { language: 'hi' }).catch(() => {});
+        }
+        this.playConfirmation(
+          "धन्यवाद। आपने हिंदी चुनी है। बताइए, मैं आपकी क्या सहायता कर सकती हूँ?",
+          'hi-IN-SwaraNeural'
+        );
+        return;
+      }
+    }
+
+    // Buffer digits for order number / reference ID keypad entry
+    if (this.dtmfBufferTimer) {
+      clearTimeout(this.dtmfBufferTimer);
+      this.dtmfBufferTimer = null;
+    }
+
+    if (digit === '#') {
+      const buffer = this.dtmfBuffer.trim();
+      this.dtmfBuffer = '';
+      if (buffer.length > 0) {
+        this.processKeypadBuffer(buffer);
+      }
+      return;
+    }
+
+    this.dtmfBuffer += digit;
+
+    // After 1200ms of inactivity, process buffered digits
+    this.dtmfBufferTimer = setTimeout(() => {
+      const buffer = this.dtmfBuffer.trim();
+      this.dtmfBuffer = '';
+      if (buffer.length > 0) {
+        this.processKeypadBuffer(buffer);
+      }
+    }, 1200);
+  }
+
+  private processKeypadBuffer(buffer: string) {
+    logger.info(`[KEYPAD] Processing buffered keypad input: "${buffer}"`);
+    if (!this.languageSelected && buffer === '1') {
+      this.handleDtmfInput('1');
+      return;
+    }
+    if (!this.languageSelected && buffer === '2') {
+      this.handleDtmfInput('2');
+      return;
+    }
+
+    // Forward keypad numbers directly as order inquiry to conversation engine
+    this.executeTurn(`Order ${buffer}`);
+  }
+
+  /**
+   * Plays a direct natural voice confirmation for IVR language selection
+   */
+  private async playConfirmation(text: string, voiceId: string) {
+    this.activeTurnId++;
+    this.stopThinkingSound();
+    this.clearSafetyTimer();
+    this.audioStreamer.cancelPlayback();
+    this.sendClear();
+
+    this.state = 'SPEAKING';
+    this.audioStreamer.setListening(false);
+    this.audioStreamer.setBargeInEnabled(true);
+    logger.info(`[VOICE] Playing IVR confirmation: "${text}" with voice ${voiceId}`);
+
+    try {
+      const mulaw = await textToSpeech.generateMulawAudio(text, voiceId);
+      await this.audioStreamer.playMulaw(mulaw, 'ai_response_complete');
+      const audioDurationMs = Math.max(3000, (mulaw.length / 8000) * 1000 + 3000);
+      this.clearSafetyTimer();
+      this.markSafetyTimer = setTimeout(() => {
+        if (this.state === 'SPEAKING') {
+          this.transitionToListening();
+        }
+      }, audioDurationMs);
+    } catch (err: any) {
+      logger.error(`[VOICE] Failed to play IVR confirmation: ${err.message}`);
+      this.transitionToListening();
+    }
   }
 
   /**
@@ -220,10 +353,13 @@ export class MediaStreamHandler {
       return;
     }
 
+    const turnId = ++this.activeTurnId;
     const tStart = Date.now();
-    logger.info('[AUDIO] Caller media received');
     this.state = 'PROCESSING';
     this.audioStreamer.setListening(false);
+
+    // Immediately play soft thinking chime so there is never awkward dead silence!
+    this.startThinkingSound();
 
     try {
       // 1. Convert to text via Groq Whisper STT
@@ -231,25 +367,97 @@ export class MediaStreamHandler {
       const transcript = await speechToText.transcribeMulawBuffer(mulawBuffer);
       const sttMs = Date.now() - tSttStart;
 
+      // Check if this turn is still the active turn (caller didn't barge-in or hang up)
+      if (turnId !== this.activeTurnId) {
+        logger.info(`[VOICE] Discarding STT from outdated turn ${turnId} (current: ${this.activeTurnId})`);
+        return;
+      }
+
       if (!transcript || transcript.trim().length === 0 || transcript.trim() === '.') {
-        logger.debug('[STT] Empty or unintelligible audio, resuming listening');
+        logger.info('[STT] Empty or noise audio, resuming listening');
+        this.stopThinkingSound();
         this.transitionToListening();
         return;
       }
 
-      logger.info(`[STT] Transcript received: "${transcript}"`);
+      // Check if caller spoke their language preference (e.g. "English", "1", "Hindi", "2")
+      const cleanTranscript = transcript.trim().toLowerCase().replace(/[.,!]/g, '');
+      if (!this.languageSelected && (
+        cleanTranscript === '1' || cleanTranscript === 'one' || cleanTranscript === 'english' || cleanTranscript === 'for english' || cleanTranscript === 'press 1'
+      )) {
+        this.languageSelected = true;
+        this.voiceId = 'en-IN-NeerjaExpressiveNeural';
+        if (this.callSid) {
+          callSessionManager.updateVariables(this.callSid, { language: 'en' }).catch(() => {});
+        }
+        this.stopThinkingSound();
+        this.playConfirmation(
+          "Thank you. You have selected English. How can I assist you with your order or questions today?",
+          'en-IN-NeerjaExpressiveNeural'
+        );
+        return;
+      }
 
-      // 2. Stream AI response via Groq LLM + synthesize TTS sentence-by-sentence in parallel!
+      if (!this.languageSelected && (
+        cleanTranscript === '2' || cleanTranscript === 'two' || cleanTranscript === 'hindi' || cleanTranscript === 'for hindi' || cleanTranscript === 'press 2' || cleanTranscript.includes('हिंदी') || cleanTranscript.includes('दो')
+      )) {
+        this.languageSelected = true;
+        this.voiceId = 'hi-IN-SwaraNeural';
+        if (this.callSid) {
+          callSessionManager.updateVariables(this.callSid, { language: 'hi' }).catch(() => {});
+        }
+        this.stopThinkingSound();
+        this.playConfirmation(
+          "धन्यवाद। आपने हिंदी चुनी है। बताइए, मैं आपकी क्या सहायता कर सकती हूँ?",
+          'hi-IN-SwaraNeural'
+        );
+        return;
+      }
+
+      // Execute conversational turn
+      await this.executeTurn(transcript, turnId, tStart, sttMs);
+
+    } catch (err: any) {
+      logger.error(`[CALL] Error processing caller speech: ${err.message}`);
+      if (turnId === this.activeTurnId) {
+        this.stopThinkingSound();
+        this.transitionToListening();
+      }
+    }
+  }
+
+  /**
+   * Executes LLM inference + streaming sentence-by-sentence TTS
+   */
+  private async executeTurn(transcript: string, existingTurnId?: number, tStartOverride?: number, sttMsOverride?: number) {
+    const turnId = existingTurnId ?? ++this.activeTurnId;
+    const tStart = tStartOverride ?? Date.now();
+    const sttMs = sttMsOverride ?? 0;
+
+    this.state = 'PROCESSING';
+    this.audioStreamer.setListening(false);
+    this.startThinkingSound();
+
+    let firstChunkSent = false;
+    let totalAudioBytes = 0;
+    let totalTtsMs = 0;
+    let sentenceIndex = 0;
+
+    try {
+      logger.info(`[CONVERSATION] processing transcript: "${transcript}"`);
+      logger.info(`[VOICE] Caller input: "${transcript}"`);
+
       logger.info('[LLM] Streaming response & generating speech concurrently');
-      let firstChunkSent = false;
-      let totalTtsMs = 0;
-      let sentenceIndex = 0;
 
       const aiResponse = await conversationEngine.processUserInputStreaming(
         this.callSid!,
         transcript,
         this.employeeId,
         async (sentence: string, isFinal: boolean) => {
+          if (turnId !== this.activeTurnId) {
+            return;
+          }
+
           if (!sentence || sentence.trim().length === 0) {
             if (isFinal && firstChunkSent) {
               this.sendMark('ai_response_complete');
@@ -257,8 +465,7 @@ export class MediaStreamHandler {
             return;
           }
 
-          if (this.state !== 'PROCESSING' && this.state !== 'SPEAKING') {
-            // User interrupted via barge-in, cancel sentence processing
+          if (turnId !== this.activeTurnId) {
             return;
           }
 
@@ -266,16 +473,28 @@ export class MediaStreamHandler {
           this.audioStreamer.setBargeInEnabled(true);
           sentenceIndex++;
 
+          // Dynamic human voice selection:
+          // If sentence contains Devanagari Hindi characters, speak using Swara (native Hindi human voice).
+          // Otherwise, speak using Neerja (expressive, natural human Indian-English voice).
+          const hasDevanagari = /[\u0900-\u097F]/.test(sentence);
+          const voiceForSentence = hasDevanagari ? 'hi-IN-SwaraNeural' : this.voiceId;
+
           const tSentenceTts = Date.now();
-          const mulawSentence = await textToSpeech.generateMulawAudio(sentence, this.voiceId);
+          const mulawSentence = await textToSpeech.generateMulawAudio(sentence, voiceForSentence);
           const sentenceTtsMs = Date.now() - tSentenceTts;
           totalTtsMs += sentenceTtsMs;
+          totalAudioBytes += mulawSentence.length;
 
           if (!firstChunkSent) {
             firstChunkSent = true;
+            this.stopThinkingSound();
             const ttfa = Date.now() - tStart;
-            logger.info(`[LATENCY] >>> TTFA (Time-To-First-Audio): ${ttfa}ms <<< (STT: ${sttMs}ms, First-Sentence TTS: ${sentenceTtsMs}ms) | First Sentence: "${sentence}"`);
+            logger.info(`[LATENCY] >>> TTFA (Time-To-First-Audio): ${ttfa}ms <<< (STT: ${sttMs}ms, First-Sentence TTS: ${sentenceTtsMs}ms | Voice: ${voiceForSentence}) | First Sentence: "${sentence}"`);
             logger.info('[VOICE] Sending audio to caller');
+          }
+
+          if (turnId !== this.activeTurnId) {
+            return;
           }
 
           const markName = isFinal ? 'ai_response_complete' : undefined;
@@ -286,23 +505,103 @@ export class MediaStreamHandler {
         }
       );
 
+      if (turnId !== this.activeTurnId) {
+        return;
+      }
+
       const totalTurnAround = Date.now() - tStart;
       logger.info(`[LLM] Full response generated: "${aiResponse}"`);
       logger.info(`[LATENCY-SUMMARY] Total Turnaround: ${totalTurnAround}ms | STT: ${sttMs}ms | Cumulative TTS: ${totalTtsMs}ms`);
 
-      // Set fallback timer in case Twilio mark is delayed
-      this.clearSafetyTimer();
-      this.markSafetyTimer = setTimeout(() => {
-        if (this.state === 'SPEAKING') {
-          logger.info('[VOICE] Response completed (safety timer fired)');
-          this.transitionToListening();
-        }
-      }, 4000);
+      if (totalAudioBytes > 0) {
+        const audioDurationMs = Math.max(3000, (totalAudioBytes / 8000) * 1000 + 4000);
+        this.clearSafetyTimer();
+        this.markSafetyTimer = setTimeout(() => {
+          if (this.state === 'SPEAKING' && turnId === this.activeTurnId) {
+            logger.info('[VOICE] Response completed (fallback safety timer fired)');
+            this.transitionToListening();
+          }
+        }, audioDurationMs);
+      }
 
     } catch (err: any) {
-      logger.error(`[CALL] Error processing caller speech: ${err.message}`);
-      // Resilient fallback: inform caller and return to listening
-      this.transitionToListening();
+      logger.error(`[CALL] Error executing turn: ${err.message}`);
+    } finally {
+      if (turnId === this.activeTurnId) {
+        this.stopThinkingSound();
+        if (!firstChunkSent && this.state === 'PROCESSING') {
+          logger.warn('[VOICE] Turn ended without audio output — auto recovering to LISTENING');
+          this.transitionToListening();
+        }
+      }
+    }
+  }
+
+  private startThinkingSound() {
+    if (this.isThinkingSoundActive) return;
+    this.isThinkingSoundActive = true;
+
+    // Thinking sound safety timeout: stop background chime after 8 seconds so it never loops forever
+    this.thinkingMaxTimer = setTimeout(() => {
+      if (this.isThinkingSoundActive) {
+        logger.info('[VOICE] Thinking sound reached timeout — stopping chime');
+        this.stopThinkingSound();
+      }
+    }, 8000);
+
+    // Grace period of 350ms: if the answer is generated instantly, NO chime ever sounds!
+    this.thinkingTimeout = setTimeout(() => {
+      if (!this.isThinkingSoundActive || this.state !== 'PROCESSING') return;
+      logger.info('[VOICE] Processing taking > 350ms — playing soft thinking chime');
+
+      const chimeBuffer = thinkingSoundGenerator.getChimeBuffer();
+      let offset = 0;
+      const CHUNK_SIZE = 640; // 80ms chunks of 8000Hz audio
+
+      this.thinkingInterval = setInterval(() => {
+        if (!this.isThinkingSoundActive || this.state !== 'PROCESSING') {
+          this.stopThinkingSound();
+          return;
+        }
+
+        if (this.ws.readyState === WebSocket.OPEN && this.streamSid) {
+          const chunk = chimeBuffer.subarray(offset, Math.min(offset + CHUNK_SIZE, chimeBuffer.length));
+          this.sendMedia(chunk.toString('base64'));
+
+          offset += CHUNK_SIZE;
+          if (offset >= chimeBuffer.length) {
+            offset = 0; // Loop seamlessly
+          }
+        }
+      }, 80);
+    }, 350);
+  }
+
+  private stopThinkingSound() {
+    if (this.thinkingTimeout) {
+      clearTimeout(this.thinkingTimeout);
+      this.thinkingTimeout = null;
+    }
+    if (this.thinkingMaxTimer) {
+      clearTimeout(this.thinkingMaxTimer);
+      this.thinkingMaxTimer = null;
+    }
+    if (!this.isThinkingSoundActive && !this.thinkingInterval) return;
+    this.isThinkingSoundActive = false;
+    if (this.thinkingInterval) {
+      clearInterval(this.thinkingInterval);
+      this.thinkingInterval = null;
+      logger.info('[VOICE] Stopped thinking chime — answer ready');
+      this.sendClear();
+    }
+  }
+
+  private sendClear() {
+    if (this.ws.readyState === WebSocket.OPEN && this.streamSid) {
+      this.ws.send(JSON.stringify({
+        event: 'clear',
+        streamSid: this.streamSid,
+      }));
     }
   }
 
@@ -351,6 +650,11 @@ export class MediaStreamHandler {
   private async cleanup() {
     if (this.isCleanedUp) return;
     this.isCleanedUp = true;
+    if (this.dtmfBufferTimer) {
+      clearTimeout(this.dtmfBufferTimer);
+      this.dtmfBufferTimer = null;
+    }
+    this.stopThinkingSound();
     this.clearSafetyTimer();
     this.audioStreamer.stop();
 

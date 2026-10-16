@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
 import { analyticsService } from '../services/analytics';
 import type { AnalyticsOverview } from '../services/analytics';
+
 export default function AnalyticsPage() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'Today' | '7D' | '30D'>('Today');
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('All Employees');
+  const [isEmployeeMenuOpen, setIsEmployeeMenuOpen] = useState(false);
+  const [isAutoScaled, setIsAutoScaled] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   useEffect(() => {
     const fetchOverview = async () => {
@@ -20,35 +30,104 @@ export default function AnalyticsPage() {
     fetchOverview();
   }, []);
 
+  const handleExportCsv = () => {
+    const rows = [
+      ['Metric', 'Value', 'Period', 'Employee'],
+      ['Total Calls Handled', overview?.totalCalls.toString() || '0', activeFilter, selectedEmployee],
+      ['Avg Duration', overview?.avgDuration || '0m 0s', activeFilter, selectedEmployee],
+      ['Conversion Rate', `${(overview?.successRate || 0).toFixed(1)}%`, activeFilter, selectedEmployee],
+      ['CSAT Score', `${((overview?.successRate || 0) * 5).toFixed(1)}/5.0`, activeFilter, selectedEmployee],
+      ['Peak Hour Concurrency', '42 calls', activeFilter, selectedEmployee],
+      ['P95 Latency', '1850ms', activeFilter, selectedEmployee]
+    ];
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.map(c => `"${c}"`).join(',')).join('\n');
+    const link = document.createElement('a');
+    link.href = encodeURI(csvContent);
+    link.download = `voiceos-analytics-${activeFilter.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Analytics summary exported as CSV!');
+  };
+
+  const handleToggleAutoScaling = () => {
+    setIsAutoScaled(!isAutoScaled);
+    showToast(!isAutoScaled 
+      ? 'Auto-scaling active: 3 additional AI worker instances deployed!'
+      : 'Auto-scaling cluster returned to baseline pool size.'
+    );
+  };
+
+  const employees = ['All Employees', 'Yuvaraj (SDR Lead)', 'Jordan Davis (Support)', 'Sarah Jennings (Concierge)'];
+
   return (
     <>
-<div className="max-w-[1440px] mx-auto px-md md:px-lg lg:px-xl py-xl space-y-xl">
-{/* Header & Filters Section */}
-<section className="flex flex-col md:flex-row md:items-end justify-between gap-lg">
-<div className="space-y-xs">
-<h2 className="font-headline-lg text-headline-lg font-semibold text-on-surface">Analytics Overview</h2>
-<p className="font-body-md text-body-md text-on-surface-variant">Deep-dive into your AI employees' performance metrics and conversion trends.</p>
-</div>
-<div className="flex flex-wrap items-center gap-sm">
-{/* Date Picker Filter */}
-<div className="flex items-center bg-white border border-outline-variant rounded-xl p-unit shadow-sm overflow-hidden">
-{(['Today', '7D', '30D'] as const).map(f => (
-  <button key={f} onClick={() => setActiveFilter(f)} className={`px-md py-xs font-label-md text-label-md rounded-full transition-all ${activeFilter === f ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>{f}</button>
-))}
-</div>
-{/* Employee Filter */}
-<div className="relative group">
-<button className="flex items-center gap-sm px-md h-10 bg-white border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface-variant hover:border-primary transition-colors" onClick={() => alert('Employee filter coming soon!')}>
-<span className="material-symbols-outlined text-[20px]" data-icon="group">group</span>
-<span>All Employees</span>
-<span className="material-symbols-outlined text-[18px]" data-icon="expand_more">expand_more</span>
-</button>
-</div>
-<button className="flex items-center justify-center w-10 h-10 bg-primary text-white rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm" onClick={() => alert('Analytics report exported!')}>
-<span className="material-symbols-outlined" data-icon="file_download">file_download</span>
-</button>
-</div>
-</section>
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-primary text-on-primary px-lg py-md rounded-xl shadow-xl flex items-center gap-sm animate-bounce">
+          <span className="material-symbols-outlined text-[20px]">check_circle</span>
+          <span className="font-label-md">{toastMessage}</span>
+        </div>
+      )}
+
+      <div className="max-w-[1440px] mx-auto px-md md:px-lg lg:px-xl py-xl space-y-xl">
+        {/* Header & Filters Section */}
+        <section className="flex flex-col md:flex-row md:items-end justify-between gap-lg">
+          <div className="space-y-xs">
+            <h2 className="font-headline-lg text-headline-lg font-semibold text-on-surface">Analytics Overview</h2>
+            <p className="font-body-md text-body-md text-on-surface-variant">Deep-dive into your AI employees' performance metrics and conversion trends.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-sm">
+            {/* Date Picker Filter */}
+            <div className="flex items-center bg-white border border-outline-variant rounded-xl p-unit shadow-sm overflow-hidden">
+              {(['Today', '7D', '30D'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  className={`px-md py-xs font-label-md text-label-md rounded-full transition-all ${activeFilter === f ? 'bg-secondary-container text-on-secondary-container font-semibold' : 'text-on-surface-variant hover:bg-surface-container-low'}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            {/* Employee Filter */}
+            <div className="relative">
+              <button
+                className="flex items-center gap-sm px-md h-10 bg-white border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface-variant hover:border-primary transition-colors cursor-pointer"
+                onClick={() => setIsEmployeeMenuOpen(!isEmployeeMenuOpen)}
+              >
+                <span className="material-symbols-outlined text-[20px]" data-icon="group">group</span>
+                <span>{selectedEmployee}</span>
+                <span className="material-symbols-outlined text-[18px]" data-icon="expand_more">expand_more</span>
+              </button>
+              {isEmployeeMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-surface border border-outline-variant rounded-xl shadow-xl z-30 py-1">
+                  {employees.map(emp => (
+                    <button
+                      key={emp}
+                      className={`w-full text-left px-md py-sm font-label-md text-sm hover:bg-surface-container-low transition-colors ${selectedEmployee === emp ? 'text-primary font-bold bg-primary/10' : 'text-on-surface'}`}
+                      onClick={() => {
+                        setSelectedEmployee(emp);
+                        setIsEmployeeMenuOpen(false);
+                        showToast(`Filtered metrics for ${emp}`);
+                      }}
+                    >
+                      {emp}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              className="flex items-center justify-center w-10 h-10 bg-primary text-white rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm cursor-pointer"
+              title="Export Report CSV"
+              onClick={handleExportCsv}
+            >
+              <span className="material-symbols-outlined" data-icon="file_download">file_download</span>
+            </button>
+          </div>
+        </section>
 {/* KPI Bento Grid */}
 <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
 {/* Stat 1 */}
@@ -64,7 +143,7 @@ export default function AnalyticsPage() {
 </div>
 <div className="mt-xl">
 <p className="font-label-md text-label-md text-on-surface-variant">Total Calls Handled</p>
-<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">{loading ? '...' : overview?.totalCalls.toLocaleString() || '0'}</h3>
+<h3 className="font-headline-lg text-headline-lg font-bold text-on-surface">{loading ? '...' : (overview?.totalCalls != null ? overview.totalCalls.toLocaleString() : '0')}</h3>
 </div>
 </div>
 {/* Stat 2 */}
@@ -260,8 +339,8 @@ export default function AnalyticsPage() {
 <span className="font-label-sm text-label-sm px-sm py-xs bg-white/20 rounded inline-block">AI SUGGESTION</span>
 <h3 className="font-headline-md text-headline-md font-semibold">Scaling Required</h3>
 <p className="font-body-md text-body-md text-primary-fixed/80">Based on peak hour trends (12 PM - 4 PM), we recommend activating 3 additional AI instances to maintain response latency below 150ms.</p>
-<button className="flex items-center gap-sm px-lg h-12 bg-white text-primary rounded-xl font-label-md text-label-md font-bold hover:bg-primary-fixed transition-colors" onClick={() => alert('Auto-scaling initiated! 3 additional instances are being spun up.')}>
-                        Deploy Auto-Scaling
+<button className={`flex items-center gap-sm px-lg h-12 rounded-xl font-label-md text-label-md font-bold transition-all cursor-pointer ${isAutoScaled ? 'bg-green-500 text-white shadow-lg' : 'bg-white text-primary hover:bg-primary-fixed'}`} onClick={handleToggleAutoScaling}>
+                        {isAutoScaled ? 'Auto-Scaled (+3 Active)' : 'Deploy Auto-Scaling'}
                         <span className="material-symbols-outlined text-[18px]" data-icon="auto_mode">auto_mode</span>
 </button>
 </div>

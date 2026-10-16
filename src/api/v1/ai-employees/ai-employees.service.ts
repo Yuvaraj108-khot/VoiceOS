@@ -5,6 +5,7 @@ import { slugify } from '../../../utils/slugify';
 import type { z } from 'zod';
 import type { createEmployeeSchema, updateEmployeeSchema } from './ai-employees.validator';
 import { Prisma } from '@prisma/client';
+import { cache, CacheKeys } from '../../../lib/cache';
 
 export const aiEmployeesService = {
   async list(organizationId: string, options: { page?: number; limit?: number; search?: string } = {}) {
@@ -12,28 +13,44 @@ export const aiEmployeesService = {
     const limit = options.limit || 20;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.AIEmployeeWhereInput = {
-      organizationId,
-      deletedAt: null,
-      ...(options.search && {
-        OR: [
-          { name: { contains: options.search, mode: 'insensitive' } },
-          { role: { contains: options.search, mode: 'insensitive' } },
-        ]
-      })
-    };
+    const cacheKey = `${CacheKeys.employeeList(organizationId)}:${page}:${limit}:${options.search || ''}`;
 
-    const [items, total] = await Promise.all([
-      prisma.aIEmployee.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.aIEmployee.count({ where })
-    ]);
+    return cache.getOrSet(cacheKey, async () => {
+      const where: Prisma.AIEmployeeWhereInput = {
+        organizationId,
+        deletedAt: null,
+        ...(options.search && {
+          OR: [
+            { name: { contains: options.search, mode: 'insensitive' } },
+            { role: { contains: options.search, mode: 'insensitive' } },
+          ]
+        })
+      };
 
-    return { items, total, page, limit };
+      const [items, total] = await Promise.all([
+        prisma.aIEmployee.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            voiceProfile: true,
+            phoneNumbers: { where: { releasedAt: null } },
+            _count: {
+              select: { calls: true }
+            }
+          }
+        }),
+        prisma.aIEmployee.count({ where })
+      ]);
+
+      const enrichedItems = items.map(emp => ({
+        ...emp,
+        callsHandled: emp._count?.calls ?? emp.callsHandled ?? 0
+      }));
+
+      return { items: enrichedItems, total, page, limit };
+    }, 30);
   },
 
   async get(organizationId: string, id: string) {
@@ -57,28 +74,34 @@ export const aiEmployeesService = {
   },
 
   async create(organizationId: string, createdById: string, data: z.infer<typeof createEmployeeSchema>) {
-    return prisma.aIEmployee.create({
+    const created = await prisma.aIEmployee.create({
       data: {
-        id: generatePrefixedId('emp'),
         organizationId,
         name: data.name,
         slug: slugify(data.name) + '-' + Math.floor(Math.random() * 1000),
         role: data.role,
-        systemPrompt: data.systemPrompt,
+        status: 'ACTIVE',
+        personality: 'Professional, consultative, warm, and highly knowledgeable',
+        systemPrompt: data.systemPrompt || '',
         firstMessage: data.welcomeMessage,
         languages: [data.language],
         currentLanguage: data.language,
         maxCallDuration: data.maxDurationSeconds,
         voiceProfile: {
           create: {
-            id: generatePrefixedId('vp'),
-            provider: data.voiceProvider,
-            voiceId: data.voiceId || process.env.ELEVENLABS_DEFAULT_VOICE_ID || 'default_voice',
-            voiceName: 'Default Voice',
+            provider: data.voiceProvider || 'EDGE_TTS',
+            voiceId: data.voiceId || 'en-US-AriaNeural',
+            voiceName: data.voiceId || 'Aria (US Female)',
           }
         }
+      },
+      include: {
+        voiceProfile: true
       }
     });
+
+    await cache.delPattern(`${CacheKeys.employeeList(organizationId)}*`);
+    return created;
   },
 
   async update(organizationId: string, id: string, data: z.infer<typeof updateEmployeeSchema>) {
@@ -96,32 +119,38 @@ export const aiEmployeesService = {
       updateData.languages = [data.language];
       updateData.currentLanguage = data.language;
     }
+    if (data.status) updateData.status = data.status;
     if (data.maxDurationSeconds) updateData.maxCallDuration = data.maxDurationSeconds;
 
     if (data.voiceId || data.voiceProvider) {
       if (existing.voiceProfile) {
         updateData.voiceProfile = {
           update: {
-            ...(data.voiceId && { voiceId: data.voiceId }),
+            ...(data.voiceId && { voiceId: data.voiceId, voiceName: data.voiceId }),
             ...(data.voiceProvider && { provider: data.voiceProvider }),
           }
         };
       } else {
         updateData.voiceProfile = {
           create: {
-            id: generatePrefixedId('vp'),
-            provider: data.voiceProvider || 'ELEVENLABS',
-            voiceId: data.voiceId || 'default_voice',
-            voiceName: 'Default Voice'
+            provider: data.voiceProvider || 'EDGE_TTS',
+            voiceId: data.voiceId || 'en-US-AriaNeural',
+            voiceName: data.voiceId || 'Aria (US Female)'
           }
         };
       }
     }
 
-    return prisma.aIEmployee.update({
+    const updated = await prisma.aIEmployee.update({
       where: { id },
       data: updateData,
+      include: {
+        voiceProfile: true
+      }
     });
+
+    await cache.delPattern(`${CacheKeys.employeeList(organizationId)}*`);
+    return updated;
   },
 
   async delete(organizationId: string, id: string) {
@@ -135,5 +164,7 @@ export const aiEmployeesService = {
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    await cache.delPattern(`${CacheKeys.employeeList(organizationId)}*`);
   }
 };

@@ -9,17 +9,41 @@ import { asyncHandler } from '../utils/asyncHandler';
  * Super admins can switch contexts via the X-Organization-ID header.
  * Normal users are bound to the org in their JWT.
  */
+let cachedDefaultOrg: any = null;
+
+async function getDefaultOrg() {
+  if (!cachedDefaultOrg) {
+    cachedDefaultOrg = await prisma.organization.findFirst({
+      where: { deletedAt: null },
+      orderBy: { createdAt: 'asc' }
+    });
+  }
+  return cachedDefaultOrg;
+}
+
 export const tenantResolver = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.user || !req.organization) {
       if (process.env.NODE_ENV !== 'production') {
-        req.organization = {
-          id: 'org_dev',
-          slug: 'demo-org',
-          name: 'Demo Organization',
-          planTier: 'ENTERPRISE' as any,
+        const defaultOrg = await getDefaultOrg();
+        req.organization = defaultOrg || {
+          id: '94f4f54e-27db-4b98-9e5c-71f583343350',
+          slug: 'voiceos-demo',
+          name: 'VoiceOS Demo',
+          planTier: 'STARTER',
           isActive: true,
         };
+        req.user = req.user || ({
+          id: 'a144e5f2-2e81-492a-ac5b-aff18d04e284',
+          email: 'admin@voiceos.io',
+          isSuperAdmin: true,
+          role: 'OWNER',
+        } as any);
+        req.member = req.member || ({
+          id: '8ddf114b-c15a-43f8-ba5a-3b21231e70f0',
+          role: 'OWNER',
+          isActive: true,
+        } as any);
         return next();
       }
       throw ApiError.unauthorized();

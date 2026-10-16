@@ -31,6 +31,12 @@ export const knowledgeController = {
     ApiResponse.success(res, doc);
   },
 
+  async getRows(req: Request, res: Response) {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const result = await knowledgeService.getRows(req.organization!.id, req.params.id, limit);
+    ApiResponse.success(res, result);
+  },
+
   async delete(req: Request, res: Response) {
     await knowledgeService.delete(req.organization!.id, req.params.id);
     ApiResponse.success(res, null, { message: 'Knowledge Document deleted' });

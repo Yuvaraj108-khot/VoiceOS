@@ -29,7 +29,13 @@ const createPrismaClient = (): PrismaClient => {
   }
 
   (client as any).$on('error', (e: any) => {
-    logger.error({ message: e.message, target: e.target }, 'Prisma error');
+    const msg = e.message || '';
+    if (msg.includes('Closed') || msg.includes('kind: Closed') || msg.includes('quaint')) {
+      logger.warn('[Prisma] Serverless DB connection dropped. Auto-reconnecting connection pool...');
+      client.$connect().catch(() => null);
+    } else {
+      logger.error({ message: msg, target: e.target }, 'Prisma error');
+    }
   });
 
   return client;

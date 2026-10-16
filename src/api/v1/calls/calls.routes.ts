@@ -10,6 +10,7 @@ const router = Router();
 router.use(optionalAuthenticate);
 
 router.get('/', asyncHandler(callsController.list));
+router.get('/active', asyncHandler(callsController.getActiveCall));
 router.get('/:id', asyncHandler(callsController.get));
 
 router.post(
