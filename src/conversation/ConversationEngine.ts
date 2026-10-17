@@ -106,59 +106,77 @@ export class ConversationEngine {
         }
       } catch { /* ignore */ }
 
-      // 2. Process turn with SlotFillingEngine
-      const activeContextId = session?.variables?.active_order_id || null;
-      const pendingRequest = session?.variables?.pending_request || null;
-      const dataProfile = await this.getOrgDataProfile(orgId);
+      // 2. Identify active context or extract identifier (ID, phone, email, or name)
+      const activeContextId = session?.variables?.active_context_id || session?.variables?.active_order_id || null;
 
-      const slotResult = slotFillingEngine.processTurn(
-        userInput,
-        conversationHistory,
-        activeContextId,
-        pendingRequest,
-        dataProfile
-      );
+      // Only trigger a data lookup if the user utterance is actually asking about a
+      // specific entity (order, status, delivery, etc.) OR is providing an identifier
+      // after being asked. General questions like "what are your plans?" should NEVER
+      // trigger a lookup and should never get the NOT_FOUND directive back.
+      const { isEntityQuery: isEntityInquiry } = slotFillingEngine.isEntityInquiry(userInput);
+      const extractedIdentifier = slotFillingEngine.extractIdentifier(userInput);
 
-      // 2a. If required slot is missing, ask concise clarification question immediately!
-      if (slotResult.requiresClarification && slotResult.clarificationMessage) {
-        const clarification = slotResult.clarificationMessage;
-        await callSessionManager.updateVariables(callId, {
-          pending_request: slotResult.pendingRequest
-        });
-        await memoryManager.addMessage(callId, { role: 'assistant', content: clarification });
+      // Strict follow-up: only re-use context id if the sentence is purely a follow-up
+      // pronoun (e.g. "when will it arrive?") — NOT just because "my" or "the" appeared.
+      const isStrictFollowUp = /^\s*(it|that|this|same|current)\b/i.test(userInput) ||
+        /\b(it|that|this)\s+(arrive|ship|deliver|come|status|amount|cost|price|total)\b/i.test(userInput);
 
-        this.getCallInfo(callId).then(call => {
-          if (call) callEventEmitter.emitLiveTranscript(call.organizationId, call.id, 'assistant', clarification);
-        }).catch(() => {});
+      // Only resolve an identifier if we actually have a real entity query context
+      const resolvedIdentifier =
+        extractedIdentifier ||
+        ((isStrictFollowUp || isEntityInquiry) && activeContextId ? activeContextId : null);
 
-        return clarification;
-      }
-
-      // 2b. If slot is resolved, query live exact business data and persist active context
       let verifiedDataResult: string | undefined = undefined;
-      if (slotResult.resolvedIdentifier && orgId) {
+
+      // Only do a DB lookup when user is genuinely asking about a specific record
+      if (resolvedIdentifier && orgId && (isEntityInquiry || extractedIdentifier)) {
         logger.info(
-          `[ConversationEngine] Exact data lookup triggered for identifier "${slotResult.resolvedIdentifier}"`
+          `[ConversationEngine] Exact data lookup triggered for identifier "${resolvedIdentifier}"`
         );
         verifiedDataResult = await executeLookupBusinessData(orgId, {
-          identifier: slotResult.resolvedIdentifier
+          identifier: resolvedIdentifier
         });
 
-        await callSessionManager.updateVariables(callId, {
-          active_order_id: slotResult.resolvedIdentifier,
-          pending_request: null
-        });
+        try {
+          const parsed = JSON.parse(verifiedDataResult);
+          if (parsed.found) {
+            await callSessionManager.updateVariables(callId, {
+              active_context_id: resolvedIdentifier,
+              active_order_id: resolvedIdentifier
+            });
+          } else {
+            // If the lookup found nothing AND the user was NOT explicitly asking
+            // about a record (e.g. just said "I want to know about your plans"),
+            // discard the failed lookup result so the LLM isn't told to ask for IDs.
+            if (!isEntityInquiry) {
+              verifiedDataResult = undefined;
+            }
+          }
+        } catch {}
       }
 
       // 3. Static Knowledge RAG context
-      const context = await contextRetriever.retrieveContext(employeeId, slotResult.effectiveUserQuery);
+      const context = await contextRetriever.retrieveContext(employeeId, userInput);
+
+      // Detect language
+      const hasDevanagari = /[\u0900-\u097F]/.test(userInput);
+      const isExplicitHindiSpoken = /\b(hindi|हिंदी|angrezi|angreji|me baat|mein baat)\b/i.test(userInput);
+      const isHindi = session?.variables?.language === 'hi' || hasDevanagari || isExplicitHindiSpoken;
+
+      if (isHindi && session?.variables?.language !== 'hi') {
+        callSessionManager.updateVariables(callId, { language: 'hi' }).catch(() => {});
+        this.getCallInfo(callId).then(c => {
+          if (c) prisma.call.update({ where: { id: c.id }, data: { language: 'hi' } }).catch(() => {});
+        }).catch(() => {});
+      }
 
       // 4. Build prompt with RAG + Verified Business Data
       const systemPrompt = await promptBuilder.buildSystemPrompt(
         employeeId,
         context,
         session?.variables || {},
-        verifiedDataResult
+        verifiedDataResult,
+        isHindi ? 'hi' : 'en'
       );
 
       // 5. Call Groq LLM
@@ -169,6 +187,13 @@ export class ConversationEngine {
           content: h.content
         }))
       ];
+
+      if (isHindi) {
+        messages.push({
+          role: 'system',
+          content: 'MANDATORY INSTRUCTION: You MUST answer the caller 100% in HINDI (हिंदी / Hinglish). NEVER speak in English or apologize in English. Every word must be Hindi.'
+        });
+      }
 
       let aiResponse = await streamChatCompletion(messages, { maxTokens: 512 });
       aiResponse = (aiResponse || '').trim();
@@ -215,7 +240,8 @@ export class ConversationEngine {
     callId: string,
     userInput: string,
     fallbackEmployeeId: string | undefined,
-    onSentence: (sentence: string, isFinal: boolean) => Promise<void>
+    onSentence: (sentence: string, isFinal: boolean) => Promise<void>,
+    preferredLanguage?: 'en' | 'hi'
   ): Promise<string> {
     try {
       const session = await callSessionManager.getSession(callId);
@@ -231,6 +257,18 @@ export class ConversationEngine {
 
       const orgId = await this.resolveOrgId(callId, employeeId);
 
+      // Detect language
+      const hasDevanagari = /[\u0900-\u097F]/.test(userInput);
+      const isExplicitHindiSpoken = /\b(hindi|हिंदी|angrezi|angreji|me baat|mein baat|samajh nahi|samajh nhi)\b/i.test(userInput);
+      const isHindi = preferredLanguage === 'hi' || session?.variables?.language === 'hi' || hasDevanagari || isExplicitHindiSpoken;
+
+      if (isHindi && session?.variables?.language !== 'hi') {
+        callSessionManager.updateVariables(callId, { language: 'hi' }).catch(() => {});
+        this.getCallInfo(callId).then(c => {
+          if (c) prisma.call.update({ where: { id: c.id }, data: { language: 'hi' } }).catch(() => {});
+        }).catch(() => {});
+      }
+
       // 1. Add user input to memory
       await memoryManager.addMessage(callId, { role: 'user', content: userInput });
       const conversationHistory = await memoryManager.getHistory(callId);
@@ -245,73 +283,59 @@ export class ConversationEngine {
         }
       }).catch(() => {});
 
-      // 2. Process turn with SlotFillingEngine
-      const activeContextId = session?.variables?.active_order_id || null;
-      const pendingRequest = session?.variables?.pending_request || null;
-      const dataProfile = await this.getOrgDataProfile(orgId);
+      // 2. Identify active context or extract identifier (ID, phone, email, or name)
+      const activeContextId = session?.variables?.active_context_id || session?.variables?.active_order_id || null;
 
-      const slotResult = slotFillingEngine.processTurn(
-        userInput,
-        conversationHistory,
-        activeContextId,
-        pendingRequest,
-        dataProfile
-      );
+      const { isEntityQuery: isEntityInquiryStreaming } = slotFillingEngine.isEntityInquiry(userInput);
+      const extractedIdentifier = slotFillingEngine.extractIdentifier(userInput);
 
-      // 2a. If required slot is missing, ask concise clarification question immediately!
-      if (slotResult.requiresClarification && slotResult.clarificationMessage) {
-        const clarification = slotResult.clarificationMessage;
-        await callSessionManager.updateVariables(callId, {
-          pending_request: slotResult.pendingRequest
-        });
-        await memoryManager.addMessage(callId, { role: 'assistant', content: clarification });
+      const isStrictFollowUpStreaming = /^\s*(it|that|this|same|current)\b/i.test(userInput) ||
+        /\b(it|that|this)\s+(arrive|ship|deliver|come|status|amount|cost|price|total)\b/i.test(userInput);
 
-        try {
-          const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-          const call = await prisma.call.findFirst({
-            where: isUuid(callId)
-              ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
-              : { twilioCallSid: callId },
-            select: { organizationId: true, id: true }
-          });
-          if (call) {
-            callEventEmitter.emitLiveTranscript(call.organizationId, call.id, 'assistant', clarification);
-          }
-        } catch { /* ignore */ }
+      const resolvedIdentifier =
+        extractedIdentifier ||
+        ((isStrictFollowUpStreaming || isEntityInquiryStreaming) && activeContextId ? activeContextId : null);
 
-        await onSentence(clarification, true);
-        return clarification;
-      }
-
-      // 2b. If slot is resolved, query live exact business data and persist active context
       let verifiedDataResult: string | undefined = undefined;
-      if (slotResult.resolvedIdentifier && orgId) {
+
+      if (resolvedIdentifier && orgId && (isEntityInquiryStreaming || extractedIdentifier)) {
         logger.info(
-          `[ConversationEngine Streaming] Exact data lookup triggered for identifier "${slotResult.resolvedIdentifier}"`
+          `[ConversationEngine Streaming] Exact data lookup triggered for identifier "${resolvedIdentifier}"`
         );
 
         // Provide immediate sub-second verbal feedback while querying data
-        await onSentence("Let me check that for you right away.", false);
+        const verbalFeedback = isHindi ? "जी, मैं अभी चेक करके बताता हूँ।" : "Let me check that for you right away.";
+        await onSentence(verbalFeedback, false);
 
         verifiedDataResult = await executeLookupBusinessData(orgId, {
-          identifier: slotResult.resolvedIdentifier
+          identifier: resolvedIdentifier
         });
 
-        await callSessionManager.updateVariables(callId, {
-          active_order_id: slotResult.resolvedIdentifier,
-          pending_request: null
-        });
+        try {
+          const parsed = JSON.parse(verifiedDataResult);
+          if (parsed.found) {
+            await callSessionManager.updateVariables(callId, {
+              active_context_id: resolvedIdentifier,
+              active_order_id: resolvedIdentifier
+            });
+          } else {
+            if (!isEntityInquiryStreaming) {
+              verifiedDataResult = undefined;
+            }
+          }
+        } catch {}
       }
 
       // 3. Static Knowledge RAG context
-      const context = await contextRetriever.retrieveContext(employeeId, slotResult.effectiveUserQuery);
+      const context = await contextRetriever.retrieveContext(employeeId, userInput);
 
       // 4. Build prompt
       const systemPrompt = await promptBuilder.buildSystemPrompt(
         employeeId,
         context,
         session?.variables || {},
-        verifiedDataResult
+        verifiedDataResult,
+        isHindi ? 'hi' : 'en'
       );
 
       // 5. Stream Groq LLM tokens with sentence-level chunking
@@ -323,10 +347,33 @@ export class ConversationEngine {
         }))
       ];
 
+      if (isHindi) {
+        messages.push({
+          role: 'system',
+          content: 'MANDATORY INSTRUCTION: You MUST answer the caller 100% in HINDI (हिंदी / Hinglish). NEVER speak in English or apologize in English. Every word must be Hindi.'
+        });
+      }
+
       let fullAiResponse = '';
       let sentenceBuffer = '';
-
       let firstChunkTriggered = false;
+
+      const sanitizeSentence = (s: string): string => {
+        if (!isHindi) return s;
+        if (/^(oh,?\s*)?sorry!?,?\s*i was speaking in english/i.test(s)) {
+          return "माफ़ कीजिए! अब से मैं केवल हिंदी में बात करूँगा। बताइए मैं आपकी क्या सहायता करूँ?";
+        }
+        if (/^i will (switch to|speak only in) hindi/i.test(s)) {
+          return "जी बिल्कुल, मैं हिंदी में ही बात करूँगा। कृपया अपना नंबर या ईमेल बताएं।";
+        }
+        if (/^i am (very )?sorry for the (confusion|misunderstanding)/i.test(s)) {
+          return "माफ़ कीजिए! कृपया अपना नंबर बताएं, मैं आपका ऑर्डर तुरंत चेक कर देता हूँ।";
+        }
+        if (/^please share your registered (phone|number|email)/i.test(s)) {
+          return "कृपया अपना रजिस्टर्ड फ़ोन नंबर या ईमेल बताएं।";
+        }
+        return s;
+      };
 
       await streamChatCompletion(messages, {
         maxTokens: 120, // Short, crisp voice responses — no long monologues!
@@ -347,8 +394,9 @@ export class ConversationEngine {
               .replace(/\n+/g, ' ')
               .trim();
 
-            if (cleanSentence.length >= 2) {
-              await onSentence(cleanSentence, false);
+            const finalSentence = sanitizeSentence(cleanSentence);
+            if (finalSentence.length >= 2) {
+              await onSentence(finalSentence, false);
             }
           }
         }
@@ -360,17 +408,18 @@ export class ConversationEngine {
         .replace(/\n+/g, ' ')
         .trim();
 
-      if (remainingClean.length > 0) {
-        await onSentence(remainingClean, true);
+      const finalRemaining = sanitizeSentence(remainingClean);
+      if (finalRemaining.length > 0) {
+        await onSentence(finalRemaining, true);
       } else if (!firstChunkTriggered && fullAiResponse.trim().length > 0) {
-        await onSentence(fullAiResponse.trim(), true);
+        await onSentence(sanitizeSentence(fullAiResponse.trim()), true);
       } else {
         await onSentence('', true);
       }
 
       fullAiResponse = fullAiResponse.replace(/[*_#`~[\]]/g, '').trim();
       if (!fullAiResponse) {
-        fullAiResponse = "I understand. Please go ahead.";
+        fullAiResponse = isHindi ? "जी, मैं सुन रहा हूँ। कृपया बताएं।" : "I understand. Please go ahead.";
       }
 
       // 6. Add AI response to memory

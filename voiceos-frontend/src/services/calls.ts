@@ -69,6 +69,16 @@ export const callsService = {
       console.warn('[callsService] Failed to fetch active call from backend:', err);
       return null;
     }
+  },
+
+  transferCall: async (callId: string, transferNumber: string, message?: string) => {
+    const res = await api.post(`/calls/${callId}/transfer`, { transferNumber, message });
+    return res.data || res;
+  },
+
+  takeOverCall: async (callId: string) => {
+    const res = await api.post(`/calls/${callId}/takeover`, {});
+    return res.data || res;
   }
 };
 

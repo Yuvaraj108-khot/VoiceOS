@@ -14,6 +14,9 @@ export default function LiveCallCenterPage() {
   const [isTakingOver, setIsTakingOver] = useState(false);
   const [isCrmOpen, setIsCrmOpen] = useState(false);
   const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferTargetNumber, setTransferTargetNumber] = useState('+919108796105');
+  const [isTransferring, setIsTransferring] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -38,7 +41,7 @@ export default function LiveCallCenterPage() {
     };
 
     fetchLiveCall();
-    const interval = setInterval(fetchLiveCall, 2500);
+    const interval = setInterval(fetchLiveCall, 2000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -48,21 +51,42 @@ export default function LiveCallCenterPage() {
   const handleToggleListenLive = () => {
     if (!isListeningLive) {
       setIsListeningLive(true);
-      showToast('Connected to live WebRTC audio stream.');
+      showToast('Connected to live audio stream telemetry.');
     } else {
       setIsListeningLive(false);
       showToast('Disconnected from live audio stream.');
     }
   };
 
-  const handleTakeOver = () => {
+  const handleTakeOver = async () => {
     setIsTakingOver(true);
-    showToast('AI agent paused. Operator takeover mode active.');
+    if (callData?.id) {
+      try {
+        await callsService.takeOverCall(callData.id);
+        showToast('Operator takeover active. AI responses paused.');
+      } catch {
+        showToast('Operator takeover activated locally.');
+      }
+    }
   };
 
   const handleReleaseTakeOver = () => {
     setIsTakingOver(false);
     showToast('Call returned to VoiceOS AI Employee.');
+  };
+
+  const handleExecuteTransfer = async () => {
+    if (!callData?.id || !transferTargetNumber.trim()) return;
+    setIsTransferring(true);
+    try {
+      await callsService.transferCall(callData.id, transferTargetNumber.trim());
+      showToast(`Call transferred to ${transferTargetNumber}!`);
+      setIsTransferModalOpen(false);
+    } catch (err: any) {
+      showToast(`Transfer failed: ${err.message || 'Please check number'}`);
+    } finally {
+      setIsTransferring(false);
+    }
   };
 
   const handleRegenerateSummary = () => {
@@ -241,13 +265,79 @@ Generated automatically by VoiceOS Mission Control
               }`}
               onClick={isTakingOver ? handleReleaseTakeOver : handleTakeOver}
             >
-              <span className="material-symbols-outlined text-[20px]">transfer_within_a_station</span>
+              <span className="material-symbols-outlined text-[20px]">record_voice_over</span>
               {isTakingOver ? 'Release Call' : 'Take Over'}
+            </button>
+            <button
+              className="flex items-center gap-xs px-md py-sm border border-outline-variant bg-surface text-on-surface hover:bg-surface-container-low rounded-lg font-label-md text-label-md font-semibold transition-all"
+              onClick={() => setIsTransferModalOpen(true)}
+            >
+              <span className="material-symbols-outlined text-[20px] text-tertiary">phone_forwarded</span>
+              Transfer Call
             </button>
           </div>
         </div>
 
         <PhoneDialerModal isOpen={isDialerOpen} onClose={() => setIsDialerOpen(false)} />
+
+        {/* Live Call Transfer Modal */}
+        {isTransferModalOpen && (
+          <div className="fixed inset-0 z-50 bg-scrim/40 backdrop-blur-xs flex items-center justify-center p-md">
+            <div className="bg-surface border border-outline-variant rounded-2xl p-lg max-w-md w-full shadow-2xl animate-fade-in">
+              <div className="flex items-center justify-between mb-md">
+                <div className="flex items-center gap-xs">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined text-[20px]">phone_forwarded</span>
+                  </div>
+                  <h3 className="font-headline-sm text-on-surface font-bold">Transfer Active Call</h3>
+                </div>
+                <button 
+                  onClick={() => setIsTransferModalOpen(false)}
+                  className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-on-surface-variant mb-md">
+                Instantly transfer the current caller to a human agent, external office, or department mobile number via Twilio &lt;Dial&gt;.
+              </p>
+
+              <div className="space-y-sm mb-lg">
+                <label className="block text-xs font-semibold text-on-surface-variant">
+                  Destination Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={transferTargetNumber}
+                  onChange={(e) => setTransferTargetNumber(e.target.value)}
+                  placeholder="+919876543210 or +1..."
+                  className="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl font-mono text-sm text-on-surface focus:ring-2 focus:ring-primary outline-none"
+                />
+                <p className="text-[11px] text-on-surface-variant">
+                  Caller will hear a brief hold message before being seamlessly connected.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-sm">
+                <button
+                  onClick={() => setIsTransferModalOpen(false)}
+                  className="px-md py-sm border border-outline-variant rounded-xl text-xs font-semibold hover:bg-surface-container"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExecuteTransfer}
+                  disabled={isTransferring || !transferTargetNumber.trim()}
+                  className="px-lg py-sm bg-primary text-on-primary rounded-xl text-xs font-bold hover:brightness-110 flex items-center gap-xs disabled:opacity-50 shadow-md"
+                >
+                  <span className="material-symbols-outlined text-[18px]">phone_forwarded</span>
+                  {isTransferring ? 'Transferring...' : 'Execute Live Transfer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mission Control Grid */}
         <div className="grid grid-cols-12 gap-gutter">

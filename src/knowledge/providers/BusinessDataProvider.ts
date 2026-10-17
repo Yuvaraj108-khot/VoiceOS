@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../lib/logger';
+import { SpeechNormalizer } from '../../utils/SpeechNormalizer';
 
 export interface BusinessDataQueryOptions {
   organizationId: string;
@@ -69,6 +70,10 @@ export class UploadedSpreadsheetProvider implements IBusinessDataProvider {
       // 2. Query rows across matching documents
       const targetDocIds = documents.map(d => d.id);
       const cleanId = (identifier || '').trim().toLowerCase();
+      const rawDigits = cleanId.replace(/\D/g, '');
+      const isPossiblePhone = rawDigits.length >= 7;
+      const isPossibleEmail = cleanId.includes('@');
+      const cleanNumericId = cleanId.replace(/^[^0-9]+/, '');
 
       // Fetch rows for the target documents within this organization
       const candidateRows = await prisma.businessDataRow.findMany({
@@ -76,7 +81,7 @@ export class UploadedSpreadsheetProvider implements IBusinessDataProvider {
           organizationId,
           documentId: { in: targetDocIds }
         },
-        take: 200 // Safety upper bound for in-memory exact match
+        take: 1000 // Comprehensive search across all active rows
       });
 
       if (candidateRows.length === 0) {
@@ -97,12 +102,64 @@ export class UploadedSpreadsheetProvider implements IBusinessDataProvider {
 
         let isMatch = false;
 
-        // Exact match by primary key index
-        if (cleanId && row.primaryKey && row.primaryKey.toLowerCase() === cleanId) {
-          isMatch = true;
+        // A. Match by primary key (with or without prefix, e.g. ORD1002 or 1002)
+        if (cleanId && row.primaryKey) {
+          const rowPkLower = row.primaryKey.toLowerCase();
+          const rowPkDigits = rowPkLower.replace(/^[^0-9]+/, '');
+          if (
+            rowPkLower === cleanId ||
+            (cleanNumericId && rowPkDigits === cleanNumericId)
+          ) {
+            isMatch = true;
+          }
         }
 
-        // Exact or case-insensitive match on any column value if identifier provided
+        // B. Match by phone number (comparing stripped digits e.g. 9876540102)
+        if (!isMatch && isPossiblePhone) {
+          for (const [key, val] of Object.entries(data)) {
+            const kLower = key.toLowerCase();
+            const valStr = String(val || '');
+            const valDigits = valStr.replace(/\D/g, '');
+            if (valDigits.length >= 7) {
+              if (
+                valDigits === rawDigits ||
+                valDigits.endsWith(rawDigits) ||
+                rawDigits.endsWith(valDigits)
+              ) {
+                isMatch = true;
+                break;
+              }
+            }
+          }
+        }
+
+        // C. Match by email address
+        if (!isMatch && isPossibleEmail) {
+          for (const [key, val] of Object.entries(data)) {
+            const valLower = String(val || '').trim().toLowerCase();
+            if (valLower === cleanId || (cleanId.includes(valLower) && valLower.includes('@'))) {
+              isMatch = true;
+              break;
+            }
+          }
+        }
+
+        // D. Match by customer name or word match with accent tolerance (e.g. "Yuvaraj Khot", "Yuvraj", "Rahul")
+        if (!isMatch && cleanId && cleanId.length >= 2 && !isPossiblePhone) {
+          for (const [key, val] of Object.entries(data)) {
+            const kLower = key.toLowerCase();
+            const isNameField = kLower.includes('name') || kLower.includes('customer') || kLower.includes('client') || kLower.includes('patient') || kLower.includes('user');
+            const valLower = String(val || '').trim().toLowerCase();
+            if (isNameField && valLower.length >= 2) {
+              if (SpeechNormalizer.isFuzzyNameMatch(cleanId, valLower)) {
+                isMatch = true;
+                break;
+              }
+            }
+          }
+        }
+
+        // E. General exact match on any field
         if (!isMatch && cleanId) {
           for (const [key, val] of Object.entries(data)) {
             const strVal = String(val || '').trim().toLowerCase();

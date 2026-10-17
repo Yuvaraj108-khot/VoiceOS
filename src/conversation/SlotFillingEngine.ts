@@ -1,4 +1,5 @@
 import { logger } from '../lib/logger';
+import { SpeechNormalizer } from '../utils/SpeechNormalizer';
 
 export interface PendingRequest {
   intent: string;
@@ -20,26 +21,78 @@ export interface SlotAnalysisResult {
 
 export class SlotFillingEngine {
   /**
-   * Extract business identifier (e.g. ORD1002, 1002, INV-881, #1002) from user utterance.
+   * Detects if the user expresses that they don't know, don't remember, or don't have an ID,
+   * or asks if they can provide phone/email/name/other options instead.
+   */
+  isIdentifierUnavailable(userInput: string): boolean {
+    if (!userInput) return false;
+    const text = userInput.toLowerCase();
+    return (
+      /\b(don't|do not|can't|cannot|didn't|did not)\s+(know|remember|have|recall|find)\b/i.test(text) ||
+      /\b(not\s+sure|no\s+idea|forgot|forgotten|lost|haven't\s+got)\b/i.test(text) ||
+      /\b(don't\s+have\s+(?:an?\s+)?(?:id|number|code|order|ref|details))\b/i.test(text) ||
+      /\b(check|search|look\s*up|find)\s+(?:with|by|using)\s+(?:my\s+)?(phone|number|mobile|email|name)\b/i.test(text) ||
+      /\b(can\s+you\s+check\s+by|use\s+my\s+phone|use\s+my\s+email|use\s+my\s+name)\b/i.test(text) ||
+      /\b(what\s+if\s+i\s+don't|any\s+other\s+way|other\s+plans|other\s+options|what\s+else\s+can\s+i\s+provide)\b/i.test(text)
+    );
+  }
+
+  /**
+   * Extract business identifier (e.g. ORD1002, 1002, phone number, email, or customer name) from user utterance.
    */
   extractIdentifier(userInput: string): string | null {
     if (!userInput || userInput.trim().length === 0) return null;
 
-    // 1. Matches standard entity prefixes: e.g. "ORD1002", "INV123", "TRK-981", "APT101", "PAT55"
+    // A. Use SpeechNormalizer to catch spoken numbers, spoken emails, and accents
+    const normalizedId = SpeechNormalizer.extractSpokenIdentifier(userInput);
+    if (normalizedId) {
+      return normalizedId;
+    }
+
+    // 1. Email address match (e.g. "rahul@example.com")
+    const emailMatch = userInput.match(/\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/);
+    if (emailMatch) {
+      return emailMatch[1].toLowerCase();
+    }
+
+    // 2. Phone number match (10 digits or with country code, e.g. "9876540102", "+919876540102")
+    const phoneMatch = userInput.match(/(?:\+?\d{1,3}[-.\s]?)?([6-9]\d{9})\b/) ||
+                       userInput.match(/\b(\d{10})\b/);
+    if (phoneMatch) {
+      return phoneMatch[1];
+    }
+
+    // 3. Customer name match if introduced (e.g. "My name is Yuvaraj Khot", "It's for Rahul Sharma")
+    const nameMatch = userInput.match(/(?:my name is|name is|i am|this is|under the name of|under|for|check for)\s+([A-Za-z]{2,}(?:\s+[A-Za-z]{2,}){1,2})\b/i);
+    if (nameMatch) {
+      const candidateName = nameMatch[1].trim();
+      const forbidden = ['my order', 'the order', 'an order', 'a delivery', 'the status', 'customer service'];
+      if (!forbidden.includes(candidateName.toLowerCase())) {
+        return candidateName;
+      }
+    }
+
+    // 4. Matches standard entity prefixes: e.g. "ORD1002", "INV123", "TRK-981", "APT101", "PAT55"
     const specificPrefixRegex = /\b(ORD|INV|TRK|PO|CUST|ITEM|APT|PAT|TKT|RES|BK)\s*[-_]?\s*([0-9]{2,8})\b/i;
     const specificMatch = userInput.match(specificPrefixRegex);
     if (specificMatch) {
       return `${specificMatch[1].toUpperCase()}${specificMatch[2]}`;
     }
 
-    // 2. Hash notation: e.g. #1002 or #ORD1002
+    // 5. Hash notation: e.g. #1002 or #ORD1002
     const hashMatch = userInput.match(/#\s*([a-zA-Z]{2,4})?\s*([0-9]{3,8})\b/i);
     if (hashMatch) {
       const prefix = hashMatch[1] ? hashMatch[1].toUpperCase() : 'ORD';
       return `${prefix}${hashMatch[2]}`;
     }
 
-    // 3. Matches general 2-4 letter prefix followed by digits, excluding common English stopwords
+    // 6. Matches explicit "order <number>", "order number <number>"
+    const orderPrefixMatch = userInput.match(/\border\s*(?:number|id|code)?\s*[:#]?\s*([0-9]{3,8})\b/i);
+    if (orderPrefixMatch) {
+      return `ORD${orderPrefixMatch[1]}`;
+    }
+
+    // 7. General 2-4 letter prefix followed by digits
     const generalPrefixRegex = /\b([a-zA-Z]{2,4})\s*[-_]?\s*([0-9]{3,8})\b/i;
     const genMatch = userInput.match(generalPrefixRegex);
     if (genMatch) {
@@ -50,16 +103,15 @@ export class SlotFillingEngine {
       }
     }
 
-    // 4. Matches explicit "order <number>", "order number <number>"
-    const orderPrefixMatch = userInput.match(/\border\s*(?:number|id|code)?\s*[:#]?\s*([0-9]{3,8})\b/i);
-    if (orderPrefixMatch) {
-      return `ORD${orderPrefixMatch[1]}`;
+    // 8. Matches general standalone number or "id <number>"
+    const generalNumMatch = userInput.match(/(?:(?:id|number|code|ref|it's|it\s*is)\s*[:#]?\s*)\b([0-9]{3,8})\b/i);
+    if (generalNumMatch) {
+      return generalNumMatch[1];
     }
 
-    // 5. Matches general "id <number>", "number <number>", "it's <number>", or pure 3-8 digit numbers
-    const generalNumMatch = userInput.match(/(?:(?:id|number|code|ref|it's|it\s*is)\s*[:#]?\s*)?\b([0-9]{3,8})\b/i);
-    if (generalNumMatch) {
-      return `ORD${generalNumMatch[1]}`;
+    const standaloneMatch = userInput.trim().match(/^([0-9]{3,8})$/);
+    if (standaloneMatch) {
+      return standaloneMatch[1];
     }
 
     return null;
@@ -103,20 +155,20 @@ export class SlotFillingEngine {
   }
 
   /**
-   * Generates a concise, natural, phone-friendly clarification question.
+   * Generates a warm, conversational clarification question that already offers alternatives (phone/email).
    */
   getClarificationQuestion(intent: string, entityLabel: string = 'reference ID'): string {
     switch (intent) {
       case 'delivery_date':
-        return `Sure, I can check that for you. What is your ${entityLabel}?`;
+        return `I'd be glad to check your delivery! Could you share your ${entityLabel}, or your registered phone number or email?`;
       case 'entity_status':
-        return `I can check that for you. What is your ${entityLabel}?`;
+        return `I can check that for you! Could you share your ${entityLabel}, or if you don't have it, your registered phone number or email?`;
       case 'entity_amount':
-        return `I can check that amount for you. Could you share your ${entityLabel}?`;
+        return `I can check the billing details for you! What is your ${entityLabel}, or registered phone number?`;
       case 'entity_customer':
-        return `Sure, which ${entityLabel} are you inquiring about?`;
+        return `Sure! Could you share the ${entityLabel}, or the customer's phone number or name?`;
       default:
-        return `Sure, I can look that up for you. What is your ${entityLabel}?`;
+        return `I'd be happy to look that up for you! Could you share your ${entityLabel}, or if you don't have it handy, your registered phone number or email?`;
     }
   }
 
@@ -137,9 +189,32 @@ export class SlotFillingEngine {
     const hasStructuredDocs = options?.hasStructuredDocs ?? true;
     const entityLabel = options?.entityLabel ?? 'reference ID';
 
+    // CHECK FOR MISSING / FORGOTTEN ID / ALTERNATIVE REQUEST FIRST!
+    if (this.isIdentifierUnavailable(userInput)) {
+      logger.info(
+        `[SlotFilling] User expressed missing/forgotten ID or asked for alternative lookup: "${userInput}"`
+      );
+      const alternativeClarification = `No problem at all! If you don't have your ${entityLabel} handy, you can give me your registered phone number, email address, or full name, and I'll find your details right away.`;
+      return {
+        hasActiveIdentifier: false,
+        resolvedIdentifier: null,
+        isNewIdentifier: false,
+        requiresClarification: true,
+        clarificationMessage: alternativeClarification,
+        pendingRequest: {
+          intent: 'alternative_lookup',
+          requiredSlots: ['phone, email, or name'],
+          collectedSlots: {},
+          originalUserRequest: userInput,
+          createdAt: Date.now()
+        },
+        effectiveUserQuery: userInput
+      };
+    }
+
     const rawIdInUtterance = this.extractIdentifier(userInput);
 
-    // CASE 1: Direct identifier provided in current utterance (e.g. "What is the status of ORD1002?" or "ORD1002")
+    // CASE 1: Direct identifier (ID, phone, email, or name) provided in current utterance
     if (rawIdInUtterance) {
       let effectiveQuery = userInput;
 
@@ -162,7 +237,11 @@ export class SlotFillingEngine {
     }
 
     // CASE 2: Check if this is small talk, greeting, or general question (never treat as entity lookup query)
-    const isSmallTalkOrGeneral = /\b(good\s*(morning|afternoon|evening|day|night)|hello|hi|hey|how are you|who are you|what(?:'s|\s+is)\s+(?:your|this|the)\s+company|what do you do|tell me|joke|code|python|print)\b/i.test(userInput);
+    const isSmallTalkOrGeneral =
+      // Greetings & small talk
+      /\b(good\s*(morning|afternoon|evening|day|night)|hello|hi|hey|how are you|who are you|what(?:'s|\s+is)\s+(?:your|this|the)\s+company|what do you do|tell me|joke|code|python|print)\b/i.test(userInput) ||
+      // General business / product questions — should NEVER trigger ID collection
+      /\b(plan|plans|program|programs|pm|package|packages|pricing|price|prices|tier|tiers|subscription|offer|offers|service|services|feature|features|product|products|option|options|what do you (offer|provide|have)|tell me about|what('s| is) (your|the)|how (does|do) (it|this|that|you)|can (i|you)|do you (have|offer|support|provide))\b/i.test(userInput);
 
     if (isSmallTalkOrGeneral) {
       return {
@@ -175,11 +254,10 @@ export class SlotFillingEngine {
       };
     }
 
-    // CASE 3: No identifier in current utterance — check if this is an explicit follow-up ("it", "when will it arrive", "what's the amount")
+    // CASE 3: Explicit follow-up ("it", "when will it arrive", "what's the amount") with active context ID
     const { isEntityQuery, intent } = this.isEntityInquiry(userInput, hasStructuredDocs);
     const isFollowUpPronoun = /\b(it|that|this|same|my order|the order|package|delivery|amount|status)\b/i.test(userInput);
 
-    // If caller explicitly references prior entity and we have an active context ID
     if (activeContextId && (isEntityQuery || isFollowUpPronoun)) {
       logger.info(
         `[SlotFilling] Re-using active conversational context identifier "${activeContextId}" for follow-up query`
@@ -252,3 +330,4 @@ export class SlotFillingEngine {
 }
 
 export const slotFillingEngine = new SlotFillingEngine();
+

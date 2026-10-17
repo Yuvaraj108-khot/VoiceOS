@@ -16,8 +16,22 @@ export const knowledgeService = {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = `https://${url}`;
     }
+    // Already an export CSV or output CSV link
+    if (url.includes('format=csv') || url.includes('output=csv')) {
+      return url;
+    }
+    // Published Google Sheet link (/spreadsheets/d/e/.../pub)
+    if (url.includes('/pub')) {
+      return url.includes('?') ? `${url}&output=csv` : `${url}?output=csv`;
+    }
+    // Google Drive share link (/file/d/<id>/view)
+    const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (driveMatch && driveMatch[1]) {
+      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+    }
+    // Standard Google Sheet link (/spreadsheets/d/<id>/edit)
     const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    if (match && match[1]) {
+    if (match && match[1] && match[1] !== 'e') {
       const sheetId = match[1];
       const gidMatch = url.match(/[?&]gid=([0-9]+)/);
       const gidParam = gidMatch ? `&gid=${gidMatch[1]}` : '';
@@ -142,7 +156,12 @@ export const knowledgeService = {
     } else if (targetUrl && (detectedType === 'WEBSITE' || targetUrl.startsWith('http'))) {
       detectedType = 'WEBSITE';
     } else if (targetContent) {
-      detectedType = 'FAQ';
+      const firstLine = targetContent.trim().split('\n')[0] || '';
+      if (firstLine.includes(',') && (firstLine.includes('id') || firstLine.includes('name') || firstLine.includes('email') || firstLine.includes('phone') || firstLine.includes('status') || firstLine.includes('order') || firstLine.includes('product'))) {
+        detectedType = 'CSV';
+      } else {
+        detectedType = 'FAQ';
+      }
     }
     if (!detectedType || detectedType === 'DOCUMENT') detectedType = 'FAQ';
 
@@ -173,9 +192,11 @@ export const knowledgeService = {
 
     // 2. Process based on source type
     try {
-      if (file && (detectedType === 'XLSX' || detectedType === 'CSV' || detectedType === 'SPREADSHEET')) {
-        // --- LOCAL SPREADSHEET PIPELINE ---
-        const parsed = spreadsheetParser.parseBuffer(file.buffer, file.originalname);
+      if ((file || targetContent) && (detectedType === 'XLSX' || detectedType === 'CSV' || detectedType === 'SPREADSHEET')) {
+        // --- LOCAL SPREADSHEET OR RAW CSV PIPELINE ---
+        const buffer = file ? file.buffer : Buffer.from(targetContent || '', 'utf-8');
+        const filename = file ? file.originalname : `${docName}.csv`;
+        const parsed = spreadsheetParser.parseBuffer(buffer, filename);
         if (data.primaryKey) parsed.primaryKey = data.primaryKey;
 
         if (parsed.allRows.length > 0) {
@@ -217,6 +238,10 @@ export const knowledgeService = {
         const resp = await fetch(downloadUrl);
         if (!resp.ok) {
           throw new Error(`Failed to fetch Live Sheet: HTTP ${resp.status}`);
+        }
+        const textSample = await resp.clone().text().catch(() => '');
+        if (textSample.includes('ServiceLogin') || (textSample.includes('<html') && textSample.includes('accounts.google.com'))) {
+          throw new Error("Google Sheet is not public. Please open the Google Sheet, click Share -> set 'General access' to 'Anyone with the link can view'.");
         }
         const arrayBuf = await resp.arrayBuffer();
         const buffer = Buffer.from(arrayBuf);
@@ -406,6 +431,10 @@ export const knowledgeService = {
         const resp = await fetch(downloadUrl);
         if (!resp.ok) {
           throw new Error(`Failed to fetch Live Sheet: HTTP ${resp.status}`);
+        }
+        const textSample = await resp.clone().text().catch(() => '');
+        if (textSample.includes('ServiceLogin') || (textSample.includes('<html') && textSample.includes('accounts.google.com'))) {
+          throw new Error("Google Sheet is not public. Please open the Google Sheet, click Share -> set 'General access' to 'Anyone with the link can view'.");
         }
         const arrayBuf = await resp.arrayBuffer();
         const buffer = Buffer.from(arrayBuf);

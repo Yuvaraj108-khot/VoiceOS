@@ -17,6 +17,7 @@ export class MediaStreamHandler {
   private employeeId: string = '';
   private voiceId: string = 'en-IN-NeerjaExpressiveNeural';
   private languageSelected: boolean = false;
+  private currentLanguage: 'en' | 'hi' = 'en';
   private state: CallState = 'START';
   private audioStreamer: AudioStreamer;
   private markSafetyTimer: NodeJS.Timeout | null = null;
@@ -254,10 +255,15 @@ export class MediaStreamHandler {
     if (!this.languageSelected && (this.state === 'GREETING' || this.state === 'LISTENING')) {
       if (digit === '1') {
         this.languageSelected = true;
+        this.currentLanguage = 'en';
         this.lastLanguageSelectionTime = Date.now();
         this.voiceId = 'en-IN-NeerjaExpressiveNeural';
         if (this.callSid) {
           callSessionManager.updateVariables(this.callSid, { language: 'en' }).catch(() => {});
+          prisma.call.updateMany({
+            where: { OR: [{ id: this.callSid }, { twilioCallSid: this.callSid }] },
+            data: { language: 'en' }
+          }).catch(() => {});
         }
         this.playConfirmation(
           "English selected. How can I help you today?",
@@ -266,13 +272,18 @@ export class MediaStreamHandler {
         return;
       } else if (digit === '2') {
         this.languageSelected = true;
+        this.currentLanguage = 'hi';
         this.lastLanguageSelectionTime = Date.now();
         this.voiceId = 'hi-IN-SwaraNeural';
         if (this.callSid) {
           callSessionManager.updateVariables(this.callSid, { language: 'hi' }).catch(() => {});
+          prisma.call.updateMany({
+            where: { OR: [{ id: this.callSid }, { twilioCallSid: this.callSid }] },
+            data: { language: 'hi' }
+          }).catch(() => {});
         }
         this.playConfirmation(
-          "हिंदी चुनी गई। बताइए, मैं आपकी क्या सहायता करूँ?",
+          "नमस्ते! बताइए, मैं आपकी क्या सहायता कर सकता हूँ?",
           'hi-IN-SwaraNeural'
         );
         return;
@@ -406,9 +417,14 @@ export class MediaStreamHandler {
 
       if (!this.languageSelected && isEnglishSpoken) {
         this.languageSelected = true;
+        this.currentLanguage = 'en';
         this.voiceId = 'en-IN-NeerjaExpressiveNeural';
         if (this.callSid) {
           callSessionManager.updateVariables(this.callSid, { language: 'en' }).catch(() => {});
+          prisma.call.updateMany({
+            where: { OR: [{ id: this.callSid }, { twilioCallSid: this.callSid }] },
+            data: { language: 'en' }
+          }).catch(() => {});
         }
         this.stopThinkingSound();
         this.playConfirmation(
@@ -420,16 +436,42 @@ export class MediaStreamHandler {
 
       if (!this.languageSelected && isHindiSpoken) {
         this.languageSelected = true;
+        this.currentLanguage = 'hi';
         this.voiceId = 'hi-IN-SwaraNeural';
         if (this.callSid) {
           callSessionManager.updateVariables(this.callSid, { language: 'hi' }).catch(() => {});
+          prisma.call.updateMany({
+            where: { OR: [{ id: this.callSid }, { twilioCallSid: this.callSid }] },
+            data: { language: 'hi' }
+          }).catch(() => {});
         }
         this.stopThinkingSound();
         this.playConfirmation(
-          "हिंदी चुनी गई। बताइए, मैं आपकी क्या सहायता करूँ?",
+          "नमस्ते! बताइए, मैं आपकी क्या सहायता कर सकता हूँ?",
           'hi-IN-SwaraNeural'
         );
         return;
+      }
+
+      // Automatic dynamic language detection for ongoing conversation
+      const hasDevanagari = /[\u0900-\u097F]/.test(transcript);
+      const isExplicitHindiSpokenNow = cleanTranscript.includes('hindi') || 
+        cleanTranscript.includes('हिंदी') || 
+        cleanTranscript.includes('angrezi') || 
+        cleanTranscript.includes('angreji') ||
+        cleanTranscript.includes('talk in hindi') ||
+        cleanTranscript.includes('speak in hindi');
+
+      if (hasDevanagari || isExplicitHindiSpokenNow) {
+        this.currentLanguage = 'hi';
+        this.voiceId = 'hi-IN-SwaraNeural';
+        if (this.callSid) {
+          callSessionManager.updateVariables(this.callSid, { language: 'hi' }).catch(() => {});
+          prisma.call.updateMany({
+            where: { OR: [{ id: this.callSid }, { twilioCallSid: this.callSid }] },
+            data: { language: 'hi' }
+          }).catch(() => {});
+        }
       }
 
       // Execute conversational turn
@@ -492,10 +534,10 @@ export class MediaStreamHandler {
           sentenceIndex++;
 
           // Dynamic human voice selection:
-          // If sentence contains Devanagari Hindi characters, speak using Swara (native Hindi human voice).
+          // If sentence contains Devanagari Hindi characters OR Hindi is selected, speak using Swara.
           // Otherwise, speak using Neerja (expressive, natural human Indian-English voice).
           const hasDevanagari = /[\u0900-\u097F]/.test(sentence);
-          const voiceForSentence = hasDevanagari ? 'hi-IN-SwaraNeural' : this.voiceId;
+          const voiceForSentence = (hasDevanagari || this.currentLanguage === 'hi') ? 'hi-IN-SwaraNeural' : this.voiceId;
 
           const tSentenceTts = Date.now();
           const mulawSentence = await textToSpeech.generateMulawAudio(sentence, voiceForSentence);
@@ -520,7 +562,8 @@ export class MediaStreamHandler {
           if (!completed) {
             logger.debug(`[VOICE] Sentence ${sentenceIndex} interrupted by caller`);
           }
-        }
+        },
+        this.currentLanguage
       );
 
       if (turnId !== this.activeTurnId) {

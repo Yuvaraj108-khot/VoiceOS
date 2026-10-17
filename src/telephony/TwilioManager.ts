@@ -90,6 +90,38 @@ export class TwilioManager {
       }
     });
   }
+
+  /**
+   * Seamlessly transfers an active live Twilio call to a human agent's phone number using <Dial>.
+   */
+  async transferCall(callSid: string, transferNumber: string, message?: string): Promise<{ success: boolean; sid: string }> {
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+    
+    if (message) {
+      response.say(message);
+    }
+    const dial = response.dial();
+    dial.number(transferNumber);
+
+    const twiml = response.toString();
+
+    if (this.client) {
+      try {
+        logger.info(`[TwilioManager] Live call transfer initiated for callSid=${callSid} -> to=${transferNumber}`);
+        const updated = await this.client.calls(callSid).update({
+          twiml
+        });
+        return { success: true, sid: updated.sid };
+      } catch (err: any) {
+        logger.error(`[TwilioManager] Failed to transfer call via Twilio API: ${err.message}`);
+        throw ApiError.badRequest(`Twilio call transfer failed: ${err.message}`);
+      }
+    } else {
+      logger.warn(`[TwilioManager Mock] Mock transferring call ${callSid} to ${transferNumber}`);
+      return { success: true, sid: callSid };
+    }
+  }
 }
 
 export const twilioManager = new TwilioManager();

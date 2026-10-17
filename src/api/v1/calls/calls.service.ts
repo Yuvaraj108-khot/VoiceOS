@@ -8,6 +8,8 @@ import { logger } from '../../../lib/logger';
 import twilio from 'twilio';
 import { randomUUID } from 'crypto';
 import { memoryManager } from '../../../conversation/MemoryManager';
+import { twilioManager } from '../../../telephony/TwilioManager';
+import { callEventEmitter } from '../../../realtime/CallEventEmitter';
 
 export const callsService = {
   async getActiveCall(organizationId: string) {
@@ -184,8 +186,11 @@ export const callsService = {
     const callId = randomUUID();
 
     // 2. Try creating Call record in DB (if DB available)
-    try {
-      if (phoneNumberId) {
+    // We only create a preliminary record when phoneNumberId is known.
+    // Use a unique sentinel callId so there's NO duplicate twilioCallSid conflict
+    // when the real Twilio webhook fires later.
+    if (phoneNumberId) {
+      try {
         await prisma.call.create({
           data: {
             id: callId,
@@ -193,16 +198,16 @@ export const callsService = {
             employeeId,
             customerId: data.customerId ?? null,
             phoneNumberId,
-            twilioCallSid: 'pending',
+            twilioCallSid: callId, // Use our own UUID — webhook will update this to real SID
             direction: 'OUTBOUND',
             status: 'INITIATED',
             fromNumber,
             toNumber: data.toNumber,
           }
         });
+      } catch (err: any) {
+        logger.warn(`[OutboundCall] Could not record call in DB: ${err.message}`);
       }
-    } catch (err: any) {
-      logger.warn(`[OutboundCall] Could not record call in DB: ${err.message}`);
     }
 
     // 3. Dial via Twilio REST API
@@ -227,9 +232,9 @@ export const callsService = {
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
       });
 
-      // Update DB record with real Twilio CallSid if created
+      // Update DB record with real Twilio CallSid (use updateMany to silently skip if record wasn't created)
       try {
-        await prisma.call.update({
+        await prisma.call.updateMany({
           where: { id: callId },
           data: { twilioCallSid: twilioCall.sid, status: 'RINGING' }
         });
@@ -263,5 +268,84 @@ export const callsService = {
 
     // Otherwise, return the direct URL (e.g. Twilio recording URL)
     return { url: call.recordingUrl };
+  },
+
+  async transferCall(organizationId: string, callId: string, payload: { transferNumber: string; message?: string }) {
+    const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    const call = await prisma.call.findFirst({
+      where: isUuid(callId)
+        ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
+        : { twilioCallSid: callId },
+      include: { employee: true }
+    });
+
+    if (!call) {
+      throw ApiError.notFound('Call session not found.');
+    }
+
+    const sid = call.twilioCallSid || call.id;
+    const targetNumber = payload.transferNumber || call.employee?.transferNumber || '+919108796105';
+    const message = payload.message || 'Transferring your call to a human representative now. Please hold.';
+
+    logger.info(`[CallService] Transferring call ${call.id} (SID: ${sid}) to ${targetNumber}`);
+
+    const result = await twilioManager.transferCall(sid, targetNumber, message);
+
+    await prisma.call.update({
+      where: { id: call.id },
+      data: {
+        wasTransferred: true,
+        summary: `${call.summary || ''} [Transferred to ${targetNumber}]`.trim()
+      }
+    }).catch(() => {});
+
+    await prisma.callTranscript.create({
+      data: {
+        callId: call.id,
+        speaker: 'system',
+        text: `Call transferred to representative at ${targetNumber}`
+      }
+    }).catch(() => {});
+
+    callEventEmitter.emitLiveTranscript(call.organizationId, call.id, 'assistant', `Transferring call to ${targetNumber}...`);
+    callEventEmitter.emitStatusChange(call.organizationId, call.id, 'TRANSFERRED');
+
+    return {
+      success: true,
+      message: `Call transferred to ${targetNumber}`,
+      targetNumber,
+      sid: result.sid
+    };
+  },
+
+  async takeOverCall(organizationId: string, callId: string) {
+    const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    const call = await prisma.call.findFirst({
+      where: isUuid(callId)
+        ? { OR: [{ id: callId }, { twilioCallSid: callId }] }
+        : { twilioCallSid: callId }
+    });
+
+    if (!call) {
+      throw ApiError.notFound('Call session not found.');
+    }
+
+    logger.info(`[CallService] Operator takeover activated for call ${call.id}`);
+
+    await prisma.callTranscript.create({
+      data: {
+        callId: call.id,
+        speaker: 'system',
+        text: `Operator took over the call.`
+      }
+    }).catch(() => {});
+
+    callEventEmitter.emitLiveTranscript(call.organizationId, call.id, 'assistant', `Operator has joined the call.`);
+
+    return {
+      success: true,
+      callId: call.id,
+      message: 'Operator takeover active. AI speech paused.'
+    };
   }
 };

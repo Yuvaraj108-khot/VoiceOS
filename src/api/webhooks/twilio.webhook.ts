@@ -135,7 +135,13 @@ export const twilioVoiceWebhook = async (req: Request, res: Response) => {
           }
 
           const existingCall = await prisma.call.findFirst({
-            where: { twilioCallSid: CallSid }
+            where: { 
+              OR: [
+                { twilioCallSid: CallSid },
+                // Also check if we have a record with callId as twilioCallSid (outbound pre-created record)
+                ...(callId ? [{ id: callId }] : [])
+              ]
+            }
           }).catch(() => null);
 
           if (!existingCall) {
@@ -151,6 +157,12 @@ export const twilioVoiceWebhook = async (req: Request, res: Response) => {
                 toNumber: To || 'Unknown',
                 startedAt: new Date(),
               }
+            }).catch(() => null);
+          } else if (existingCall.twilioCallSid !== CallSid) {
+            // Update pre-created outbound record with real Twilio SID
+            await prisma.call.updateMany({
+              where: { id: existingCall.id },
+              data: { twilioCallSid: CallSid, status: 'IN_PROGRESS', startedAt: new Date() }
             }).catch(() => null);
           }
         }

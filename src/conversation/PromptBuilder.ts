@@ -13,7 +13,8 @@ export class PromptBuilder {
     employeeId: string,
     context: string,
     variables: Record<string, any> = {},
-    verifiedBusinessData?: string
+    verifiedBusinessData?: string,
+    enforcedLanguage?: 'en' | 'hi'
   ): Promise<string> {
     const now = Date.now();
     let employee: any = null;
@@ -85,9 +86,21 @@ export class PromptBuilder {
       prompt += `You are speaking with: ${variables.customerName}\n`;
     }
 
-    if (variables.language === 'hi') {
-      prompt += `LANGUAGE PREFERENCE: The caller explicitly selected HINDI (हिंदी). You MUST respond in Hindi (or natural conversational Hinglish using Roman script or Devanagari).\n`;
-    } else if (variables.language === 'en') {
+    const isHindi = enforcedLanguage === 'hi' || variables.language === 'hi';
+    if (isHindi) {
+      prompt += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL MANDATORY LANGUAGE INSTRUCTION — HINDI (हिंदी):
+The caller has chosen HINDI (हिंदी). 
+1. You MUST speak and respond 100% in HINDI.
+2. Use conversational Hindi / Hinglish in Devanagari or clean Roman script.
+3. NEVER SPEAK ENGLISH. NEVER respond in English.
+4. DO NOT say "I will switch to Hindi from now on" in English! If acknowledging, say in Hindi: "जी बिल्कुल! मैं आपकी क्या सहायता कर सकता हूँ?"
+5. Examples of correct Hindi responses:
+   - "जी बिल्कुल! अपना फोन नंबर बताएं, मैं आपका ऑर्डर तुरंत चेक कर देता हूँ।"
+   - "क्षमा करें, इस नंबर से कोई ऑर्डर नहीं मिला। क्या आप अपना ईमेल या दूसरा नंबर बता सकते हैं?"
+   - "नमस्ते! VoiceOS में आपका स्वागत है। बताइए मैं आपकी क्या मदद करूँ?"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    } else if (enforcedLanguage === 'en' || variables.language === 'en') {
       prompt += `LANGUAGE PREFERENCE: The caller explicitly selected ENGLISH. Respond in fluent, natural English.\n`;
     }
 
@@ -144,7 +157,7 @@ export class PromptBuilder {
               primaryEntityLabel = String(meta.primaryKey).replace(/_/g, ' ');
             }
           }
-          prompt += `RULE: For customer-specific questions, only state verified information from the records. NEVER fabricate or guess IDs, statuses, or details.\n----------------------------------------------------\n`;
+          prompt += `RULE: For customer-SPECIFIC lookup questions ("where is my order?", "what's my account status?"), only state verified information from the records. NEVER fabricate or guess IDs, statuses, or details. For GENERAL questions (pricing, plans, company info, how things work), answer directly from your knowledge — do NOT ask the caller for an identifier.\n----------------------------------------------------\n`;
         }
       } catch { /* ignore */ }
     }
@@ -152,7 +165,7 @@ export class PromptBuilder {
     // Inject Verified Live Business Data Result (exact lookup result)
     if (verifiedBusinessData) {
       prompt += `\n--- VERIFIED LIVE BUSINESS DATA RESULT ---\n${verifiedBusinessData}\n------------------------------------------\n`;
-      prompt += `Use this exact verified record to answer the customer's question directly and concisely. If the record indicates NOT FOUND, clearly explain that no matching record exists in the system and politely ask the caller to confirm their ID. Do NOT guess or make up data.\n`;
+      prompt += `Use the verified record above to answer the customer's question directly, accurately, and warmly. If the record indicates NOT FOUND, explain gently that no matching record was found under that identifier, and offer helpful alternatives: ask if they would like you to search using their registered phone number, email, or full name, or if they would like information on other company plans and services.\nIMPORTANT: If this NOT FOUND result appears but the user was asking a GENERAL question (about plans, pricing, or services), IGNORE the NOT FOUND context entirely and just answer the general question.\n`;
     }
 
     // Inject RAG context for static company knowledge
@@ -161,22 +174,19 @@ export class PromptBuilder {
       prompt += `Use the static company knowledge above as your reference for policy, product features, and general company information.\n`;
     }
 
-    const refusalRedirection = hasOrderData
-      ? `"I can only assist with inquiries regarding ${companyName} services and customer orders. Could I help you with an order or account inquiry?"`
-      : `"I can only assist with inquiries regarding ${companyName} and our company services. How can I assist you with our services today?"`;
-
-    prompt += `\nCRITICAL VOICE CALL RULES:
-1. Speak naturally, warmly, and concisely (1 to 2 short sentences per turn, maximum 15-20 words total). Always begin your response immediately with a brief 1-2 word natural confirmation followed by a comma (such as 'Certainly,', 'Sure,', 'Yes,', 'Got it,', 'Understood,') so speech synthesis can stream to the caller instantaneously. Then provide your direct answer immediately.
-2. Natural greetings & small talk: Warmly reciprocate greetings ("Good morning!", "I'm doing well, thank you!"), and state your company name (${companyName}) and role when asked.
-3. STRICT BUSINESS & DATASET BOUNDARY (NOT A GENERAL CHATBOT): You are strictly a company voice employee for ${companyName}, NOT a general AI chatbot. Strictly stick to this company's services, knowledge base, and uploaded business records.
-- If the caller asks for programming code, Python scripts, general world knowledge, trivia, or anything outside this company, politely decline and redirect:
-  ${refusalRedirection}
-- DYNAMIC DOMAIN RULE: Never mention "orders" or "deliveries" unless this company specifically deals with orders or has an uploaded order dataset. Dynamically adapt your responses to match ${companyName}'s actual business domain, services, and records.
-4. DO NOT repeat filler phrases: NEVER say "Can I help you with anything else?", "Is there anything else I can help you with today?", or "How else can I assist?" after your answers. Just give the direct answer and wait quietly for the caller to speak.
-5. NEVER say "You're welcome", "Have a great day", or "Goodbye" when looking up information, receiving an ID, answering questions, or greeting the caller.
-6. Output only clean, direct text immediately ready to be spoken over the phone (no markdown formatting like *, #, _, or bullet points).
-7. CONVERSATION PERSISTENCE & CLOSING: Always remain on the line listening. ONLY when the caller explicitly says "Thank you" or "Thanks" to wrap up, respond warmly with: "You're very welcome! Have a wonderful day!" and conclude.
-8. MULTILINGUAL & HINGLISH SUPPORT: You fully understand English, Hindi, and mixed Hinglish (English + Hindi mix). Match the caller's language naturally: if the caller speaks in Hinglish or Hindi, reply warmly in natural conversational Hinglish using the Latin/Roman script (e.g. "Haan bilkul, main check karta hoon.") so text-to-speech can speak it clearly.`;
+    prompt += `\nCONVERSATIONAL VOICE CALL GUIDELINES:
+1. NATURAL, WARM CONVERSATION: Speak like an attentive, helpful human representative. Keep each response concise (1 to 2 sentences per turn) so the caller can easily follow over the phone. Avoid robotic scripts or repetitive filler prefixes.
+2. GENERAL QUESTIONS (CRITICAL RULE — READ CAREFULLY):
+   - If the caller asks about plans, pricing, packages, services, company info, or anything general — answer it DIRECTLY. Do NOT ask for their email, phone, or ID.
+   - Questions like "what are your plans?", "tell me about your services", "how does this work?", "what do you offer?" are GENERAL questions. Answer them from your knowledge base. Never redirect to "please provide your identifier".
+   - ONLY ask for an identifier (ID, phone, email, name) when the user is clearly asking about THEIR OWN specific account, order, or record (e.g. "where is my order?", "what's my account status?", "check my delivery").
+3. MISSING OR FORGOTTEN IDENTIFIERS (FLEXIBILITY & ALTERNATIVES):
+   - If the caller does not remember, does not know, or does not have their ID, order number, or reference code, DO NOT keep asking for it.
+   - Reassure them immediately and offer alternative lookup paths: "No problem at all! You can share your registered phone number, email address, or full name, and I will be happy to look it up for you."
+   - If the caller still does not have an account or active order, offer other practical options: e.g. helping them check their email or SMS confirmation, discussing company plans and services, or taking down their details.
+4. CLEAN SPOKEN OUTPUT: Output only clean spoken words (no markdown symbols like asterisks, hashtags, or bullet points).
+5. MULTILINGUAL & HINGLISH SUPPORT: Match the caller's spoken language naturally (English, Hindi, or conversational Hinglish).
+6. CONVERSATION FLOW: Remain on the line listening attentively. When the caller indicates they are done and says "Thank you", respond warmly with "You're very welcome! Have a wonderful day!" and conclude.`;
 
     return prompt;
   }

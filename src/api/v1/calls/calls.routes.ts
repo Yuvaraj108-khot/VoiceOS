@@ -19,6 +19,8 @@ router.post(
   asyncHandler(callsController.triggerOutboundCall)
 );
 
+router.post('/:id/transfer', asyncHandler(callsController.transfer));
+router.post('/:id/takeover', asyncHandler(callsController.takeOver));
 router.get('/:id/recording', asyncHandler(callsController.getRecording));
 
 export const callsRoutes = router;

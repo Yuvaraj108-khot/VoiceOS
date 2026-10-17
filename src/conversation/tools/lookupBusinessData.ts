@@ -64,7 +64,7 @@ export async function executeLookupBusinessData(
       searchedIdentifier: identifier,
       message: `No record found in company data matching "${identifier}".`,
       directive:
-        "IMPORTANT: You must clearly inform the caller that this record was not found in our records. Politely ask them to confirm or verify the identifier. Do NOT make up any status or details."
+        "Inform the caller warmly that no active record was found matching that detail. Reassure them and offer alternative ways to look it up (e.g., registered phone number, email, or full name), or offer to assist with other plans and services."
     });
   }
 

@@ -322,10 +322,6 @@ export const PhoneDialerModal: React.FC<PhoneDialerModalProps> = ({
                 <span>E.164 Preview: <strong className="text-on-surface font-mono">{getE164Number() || countryCode}</strong></span>
                 <span>Format: +[Country][Number]</span>
               </p>
-              <div className="mt-xs p-xs bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center gap-xs text-[11px] text-on-surface-variant">
-                <span className="material-symbols-outlined text-[14px] text-amber-500 shrink-0">info</span>
-                <span>Twilio Trial: Outbound calls only connect to verified numbers (e.g. <strong className="text-on-surface font-mono">+91 9108796105</strong>).</span>
-              </div>
             </div>
 
             {/* Tactile Keypad (0-9, *, #, +) */}

@@ -13,25 +13,50 @@ export interface CallSession {
 
 export class CallSessionManager {
   private localSessions = new Map<string, CallSession>();
+  private sessionAliases = new Map<string, string>(); // alias -> primary callId
 
   /**
    * Retrieves an active session from memory (Redis or local Map).
    */
   async getSession(callId: string): Promise<CallSession | null> {
+    const primaryId = this.sessionAliases.get(callId) || callId;
+    if (this.localSessions.has(primaryId)) {
+      return this.localSessions.get(primaryId)!;
+    }
     if (this.localSessions.has(callId)) {
       return this.localSessions.get(callId)!;
     }
 
     if (redis.status === "ready") {
       try {
-        const data = await redis.get(`call_session:${callId}`);
+        const data = await redis.get(`call_session:${primaryId}`) || await redis.get(`call_session:${callId}`);
         if (data) {
           const session = JSON.parse(data);
+          this.localSessions.set(primaryId, session);
           this.localSessions.set(callId, session);
           return session;
         }
       } catch { /* ignore */ }
     }
+
+    // Try finding counterpart ID from DB if not in memory
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callId);
+      const call = await prisma.call.findFirst({
+        where: isUuid ? { id: callId } : { twilioCallSid: callId },
+        select: { id: true, twilioCallSid: true }
+      });
+      if (call) {
+        const counterpartId = isUuid ? call.twilioCallSid : call.id;
+        if (counterpartId && counterpartId !== callId) {
+          this.sessionAliases.set(callId, counterpartId);
+          this.sessionAliases.set(counterpartId, callId);
+          if (this.localSessions.has(counterpartId)) {
+            return this.localSessions.get(counterpartId)!;
+          }
+        }
+      }
+    } catch { /* ignore */ }
 
     return null;
   }
@@ -41,6 +66,12 @@ export class CallSessionManager {
    */
   async saveSession(session: CallSession): Promise<void> {
     this.localSessions.set(session.callId, session);
+    if (session.variables?.twilioCallSid) {
+      this.sessionAliases.set(session.variables.twilioCallSid, session.callId);
+    }
+    if (session.variables?.callId) {
+      this.sessionAliases.set(session.variables.callId, session.callId);
+    }
 
     if (redis.status === "ready") {
       try {

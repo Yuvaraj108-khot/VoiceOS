@@ -762,13 +762,35 @@ export default function KnowledgeCenterPage() {
                 {modalMode === 'live_sheet' && (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-semibold text-on-surface-variant mb-1">Google Sheets Public or API URL</label>
+                      <label className="block text-xs font-semibold text-on-surface-variant mb-1">
+                        Google Sheets or Live CSV URL
+                      </label>
                       <input 
-                        type="url"
+                        type="url" 
                         value={newContent}
                         onChange={(e) => setNewContent(e.target.value)}
-                        placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv"
+                        placeholder="https://docs.google.com/spreadsheets/d/... or https://.../data.csv"
                         className="w-full px-3.5 h-10 border border-outline-variant rounded-xl text-xs focus:ring-2 focus:ring-primary bg-surface"
+                      />
+                      <p className="text-[11px] text-on-surface-variant mt-1.5 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px] text-amber-500">info</span>
+                        For Google Sheets: Click <strong>Share</strong> &rarr; set to <em>"Anyone with the link can view"</em>.
+                      </p>
+                    </div>
+
+                    <div className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/60 text-xs">
+                      <label className="block font-semibold text-on-surface mb-1">
+                        Primary Identifier Column (Optional)
+                      </label>
+                      <p className="text-[11px] text-on-surface-variant mb-2">
+                        Auto-detected if blank (e.g. <span className="font-mono">order_id</span>, <span className="font-mono">phone_number</span>, <span className="font-mono">id</span>).
+                      </p>
+                      <input 
+                        type="text" 
+                        value={primaryKeyChoice}
+                        onChange={(e) => setPrimaryKeyChoice(e.target.value)}
+                        placeholder="e.g. order_id, phone_number, customer_id"
+                        className="w-full px-3 h-8 border border-outline-variant rounded-lg text-xs bg-surface font-mono"
                       />
                     </div>
                   </div>
@@ -778,7 +800,7 @@ export default function KnowledgeCenterPage() {
                   <div>
                     <label className="block text-xs font-semibold text-on-surface-variant mb-1">Website URL for Scraping</label>
                     <input 
-                      type="url"
+                      type="url" 
                       value={newContent}
                       onChange={(e) => setNewContent(e.target.value)}
                       placeholder="https://docs.yourcompany.com"
@@ -789,13 +811,13 @@ export default function KnowledgeCenterPage() {
 
                 {modalMode === 'text' && (
                   <div>
-                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Company Knowledge Text</label>
+                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Company Knowledge Text or Raw CSV</label>
                     <textarea 
                       rows={5}
                       value={newContent}
                       onChange={(e) => setNewContent(e.target.value)}
-                      placeholder="Paste return policies, delivery schedules, FAQ items..."
-                      className="w-full p-3 border border-outline-variant rounded-xl text-xs focus:ring-2 focus:ring-primary bg-surface"
+                      placeholder="Paste return policies, FAQ items, or raw CSV rows (e.g. order_id,name,phone,status)..."
+                      className="w-full p-3 border border-outline-variant rounded-xl text-xs focus:ring-2 focus:ring-primary bg-surface font-mono"
                     />
                   </div>
                 )}
